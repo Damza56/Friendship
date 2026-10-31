@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="th"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FriendShip หมาล่า</title>
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="FriendShip"><meta name="theme-color" content="#1D4ED8">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%E2%8F%B0%3C/text%3E%3C/svg%3E">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<style>
+:root{--bg:#EEF2F8;--card:#fff;--ink:#0F2447;--mute:#6B7A94;--line:#DDE4EF;--pri:#1D4ED8;--in:#0E9F6E;--out:#D6453D;--warn:#B7791F;--ot:#7C3AED}
+@media(prefers-color-scheme:dark){:root{--bg:#0B1220;--card:#131C2E;--ink:#E7EDF8;--mute:#8E9CB8;--line:#243049;--pri:#5B8DEF;--in:#34D399;--out:#F47067;--warn:#E8B04A;--ot:#A78BFA}}
+*{box-sizing:border-box;margin:0}body{background:var(--bg);color:var(--ink);font:15px/1.5 "Noto Sans Thai",system-ui,sans-serif;padding-bottom:80px}
+.app{max-width:480px;margin:0 auto;padding:16px}.hide{display:none!important}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:14px}
+.hero{background:var(--pri);color:#fff;border-radius:22px;padding:22px;text-align:center}
+.clock{font-size:52px;font-weight:700;font-variant-numeric:tabular-nums}
+input,select{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:11px;margin-top:6px}
+label{font-size:13px;color:var(--mute);display:block;margin-top:10px}
+button{font:inherit;cursor:pointer}.big{width:100%;margin-top:14px;border:0;border-radius:14px;padding:16px;font-weight:600;font-size:17px;color:#fff;background:var(--in)}
+.big.out{background:var(--out)}.big.pri{background:var(--pri)}.big:disabled{opacity:.5}.big.off{background:var(--mute)}
+.g{display:grid;grid-template-columns:1fr 1fr;gap:12px;text-align:center}.g small{display:block;color:var(--mute);font-size:12px}.g b{font-size:19px}
+.chip{display:inline-block;padding:1px 9px;border-radius:99px;font-size:12px;background:var(--bg);margin-left:4px}.ok{color:var(--in)}.late{color:var(--warn)}.ot{color:var(--ot)}.miss{color:var(--out)}
+.it{display:flex;justify-content:space-between;gap:8px;padding:11px 0;border-bottom:1px solid var(--line)}.it small{display:block;color:var(--mute);font-size:12.5px}.it>div:last-child{text-align:right}
+details{border-bottom:1px solid var(--line);padding:10px 0}summary{cursor:pointer;display:flex;justify-content:space-between;gap:8px;list-style:none}
+.sm{border:0;border-radius:9px;padding:7px 12px;background:var(--pri);color:#fff;font-size:13px;margin-left:4px}
+nav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;border:0;background:none;padding:14px 0;color:var(--mute);font-weight:500}nav button.on{color:var(--pri)}
+.bar{display:flex;justify-content:space-between;align-items:center;margin-top:14px}.bar button{width:38px;height:38px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px}
+.t{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:99px;opacity:0;transition:opacity .2s;pointer-events:none;max-width:92vw;text-align:center}.t.s{opacity:1}
+</style></head><body><div class="app">
+<div id="login" class="card hide"><b style="font-size:18px">FriendShip หมาล่า</b><div style="color:var(--mute);font-size:13px">เข้าสู่ระบบลงเวลา</div>
+<label>รหัสพนักงาน (ส่วนกลางใช้อีเมลที่สร้างไว้ได้)</label><input id="lc" autocapitalize="off" autocomplete="username">
+<label>รหัสผ่าน</label><input id="lp" type="password" autocomplete="current-password">
+<button class="big pri" id="lg">เข้าสู่ระบบ</button></div>
+
+<div id="main" class="hide"><div style="font-weight:700;font-size:18px;margin-bottom:10px;color:var(--pri)">FriendShip หมาล่า</div>
+<div style="display:flex;justify-content:space-between;align-items:center"><div><b id="nm"></b><div id="dp" style="color:var(--mute);font-size:13px"></div></div><button class="sm" id="lo" style="background:var(--bg);color:var(--ink);border:1px solid var(--line)">ออก</button></div>
+<section id="p1"><div class="hero"><div id="dt"></div><div class="clock" id="ck"></div></div>
+<div class="card"><label style="margin:0">สถานที่</label><select id="pl"><option>สำนักงานใหญ่</option><option>ทำงานที่บ้าน (WFH)</option><option>นอกสถานที่</option></select>
+<label>หมายเหตุ</label><input id="nt" maxlength="80"><button class="big" id="bt">เข้างาน</button></div>
+<div class="card g"><div><small>เข้างาน</small><b id="a">--:--</b></div><div><small>ออกงาน</small><b id="b">--:--</b></div><div><small>ชั่วโมงทำงาน</small><b id="c">--</b></div><div><small>โอที (เกิน 12 ชม.)</small><b id="d" class="ot">--</b></div></div></section>
+<section id="p2" class="hide"><div class="bar"><button id="hp">‹</button><b id="hl"></b><button id="hn">›</button></div><div class="card" id="hs"></div></section>
+<section id="p3" class="hide"><div class="bar"><button id="gp">‹</button><b id="gl"></b><button id="gn">›</button></div>
+<div class="card"><b>พื้นที่ลงเวลา</b><div id="gf" style="color:var(--mute);font-size:13px;margin-top:6px"></div><label>รัศมีที่อนุญาต (เมตร)</label><input id="gr" type="number" value="150"><button class="big pri" id="gb">ตั้งตำแหน่งปัจจุบันเป็นที่ทำงาน</button><button class="big out" id="gx" style="margin-top:8px">ปิดการจำกัดพื้นที่</button></div>
+<div class="card"><b>ลิงก์สำหรับส่งพนักงาน</b><div style="color:var(--mute);font-size:13px;margin:6px 0">ลิงก์นี้มีค่าเชื่อมต่อในตัว พนักงานเปิดแล้วใช้ได้เลย ไม่ต้องกรอกอะไร</div><input id="sl" readonly><button class="big pri" id="sc" style="padding:12px;font-size:15px">คัดลอกลิงก์</button></div>
+<div class="card"><b>เพิ่มพนักงาน</b><label>รหัสพนักงาน (ใช้ล็อกอิน)</label><input id="ac" autocapitalize="off"><label>ชื่อ-นามสกุล</label><input id="an"><label>แผนก</label><input id="ad"><label>เวลาเข้างาน</label><input id="as" type="time" value="09:00"><label>รหัสผ่าน (6 ตัวขึ้นไป)</label><input id="ap"><button class="big pri" id="ab">เพิ่มพนักงาน</button></div>
+<div class="card" id="gs"></div></section></div></div>
+<nav id="nv" class="hide"><button id="n1" class="on">ลงเวลา</button><button id="n2">ของฉัน</button><button id="n3" class="hide">ส่วนกลาง</button></nav>
+<div class="t" id="t"></div>
+
+<script>
+const ls={g:k=>{try{return localStorage.getItem(k)}catch(e){return null}},s:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}}};
+(()=>{const h=new URLSearchParams(location.hash.slice(1));if(h.get('u')&&h.get('k')){ls.s('fs_u',h.get('u'));ls.s('fs_k',h.get('k'))}})();
+/* ตั้งค่าเชื่อมต่อ: กรอกในหน้าแอปครั้งแรก หรือเปิดลิงก์ที่ต่อท้ายด้วย #u=URL&k=KEY (ไม่ต้องแก้ไฟล์) */
+const SB_URL=ls.g('fs_u')||'https://YOUR-PROJECT.supabase.co', SB_KEY=ls.g('fs_k')||'YOUR-ANON-KEY';
+const sb=supabase.createClient(SB_URL,SB_KEY),$=i=>document.getElementById(i),TZ='Asia/Bangkok',pad=n=>String(n).padStart(2,'0');
+const today=()=>new Date().toLocaleDateString('en-CA',{timeZone:TZ}),ymNow=()=>today().slice(0,7);
+const hm=i=>new Date(i).toLocaleTimeString('en-GB',{timeZone:TZ,hour:'2-digit',minute:'2-digit'});
+const fmt=m=>Math.floor(m/60)+' ชม. '+m%60+' น.',tm=m=>pad(Math.floor(m/60))+':'+pad(m%60),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const shift=(y,n)=>{const[a,b]=y.split('-');const d=new Date(+a,+b-1+n,1);return d.getFullYear()+'-'+pad(d.getMonth()+1)},lab=y=>{const[a,b]=y.split('-');return new Date(+a,+b-1,1).toLocaleDateString('th-TH',{month:'long',year:'numeric'})};
+const toast=t=>{const e=$('t');e.textContent=t;e.classList.add('s');setTimeout(()=>e.classList.remove('s'),2800)};
+const wm=r=>r.out?r.worked_min:Math.max(0,Math.round((Date.now()-new Date(r.clock_in))/6e4));
+let me,rec,tab=1,hy=ymNow(),gy=ymNow();
+setInterval(()=>{const n=new Date();$('ck').textContent=n.toLocaleTimeString('en-GB',{timeZone:TZ});$('dt').textContent=n.toLocaleDateString('th-TH',{timeZone:TZ,weekday:'long',day:'numeric',month:'long',year:'numeric'});if(rec&&!rec.clock_out)live()},1000);
+function live(){const m=wm({clock_in:rec.clock_in});$('c').textContent=fmt(m);$('d').textContent=m>720?fmt(m-720):'0'}
+function chips(r,t){let h=r.late?'<span class="chip late">มาสาย</span>':'<span class="chip ok">ตรงเวลา</span>';if(!r.clock_out&&r.work_date!==t)h='<span class="chip miss">ลืมลงเวลาออก</span>';if(r.ot_min>0)h+='<span class="chip ot">โอที '+fmt(r.ot_min)+'</span>';return h}
+const rows=a=>{const t=today();return a.map(r=>'<div class="it"><div><b>'+new Date(r.work_date+'T00:00:00').toLocaleDateString('th-TH',{weekday:'short',day:'numeric',month:'short'})+'</b><small>'+esc(r.place)+(r.note?' · '+esc(r.note):'')+'</small></div><div>'+hm(r.clock_in)+' – '+(r.clock_out?hm(r.clock_out):'--:--')+'<small>'+(r.clock_out?fmt(r.worked_min):'')+'</small>'+chips(r,t)+'</div></div>').join('')||'<div style="color:var(--mute);text-align:center">ไม่มีข้อมูล</div>'};
+const range=y=>[y+'-01',shift(y,1)+'-01'];
+
+async function loadToday(){const{data}=await sb.from('attendance_v').select('*').eq('work_date',today()).maybeSingle();rec=data;
+  $('a').textContent=rec?hm(rec.clock_in):'--:--';$('b').textContent=rec?.clock_out?hm(rec.clock_out):'--:--';
+  const b=$('bt');if(!rec){if(S&&S.enforce&&S.office_lat!=null)areaBtn(b);else{b.textContent='เข้างาน';b.className='big';b.disabled=false}$('c').textContent=$('d').textContent='--'}
+  else if(!rec.clock_out){b.textContent='ออกงาน';b.className='big out';b.disabled=false;live()}
+  else{b.textContent='ลงเวลาวันนี้ครบแล้ว';b.disabled=true;$('c').textContent=fmt(rec.worked_min);$('d').textContent=rec.ot_min?fmt(rec.ot_min):'0'}}
+let S=null;
+const pos=()=>new Promise((ok,no)=>navigator.geolocation?navigator.geolocation.getCurrentPosition(p=>ok(p.coords),()=>no(),{enableHighAccuracy:true,timeout:12000}):no());
+const dm=(a,b,c,d)=>{const r=Math.PI/180,x=Math.sin((c-a)*r/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin((d-b)*r/2)**2;return 6371000*2*Math.asin(Math.sqrt(x))};
+let AREA={s:'wait',d:0},LAST=null,WID=null;
+function fenceOn(){return S&&S.enforce&&S.office_lat!=null}
+function areaCalc(){if(LAST&&fenceOn()){const d=Math.round(dm(LAST.latitude,LAST.longitude,S.office_lat,S.office_lng));AREA={s:d<=S.radius_m?'in':'out',d}}}
+function areaBtn(b){if(AREA.s==='in'){b.textContent='เข้างาน';b.className='big';b.disabled=false;return}
+  b.className='big off';b.disabled=true;b.textContent=AREA.s==='out'?'อยู่นอกพื้นที่ทำงาน (ห่าง '+AREA.d+' ม.)':AREA.s==='nogps'?'เปิด GPS เพื่อเข้างาน'+(AREA.c?' (รหัส '+AREA.c+')':''):'กำลังหาตำแหน่ง…'}
+function watchStart(){if(WID!=null||!navigator.geolocation)return;WID=navigator.geolocation.watchPosition(p=>{LAST=p.coords;areaCalc();if(!rec)loadToday()},er=>{AREA={s:'nogps',d:0,c:er&&er.code};if(!rec)loadToday()},{enableHighAccuracy:true,maximumAge:5000,timeout:20000})}
+function fenceChanged(){if(fenceOn()){areaCalc();watchStart()}else{if(WID!=null){navigator.geolocation.clearWatch(WID);WID=null}AREA={s:'wait',d:0};LAST=null}loadToday()}
+$('bt').onclick=async()=>{const b=$('bt');b.disabled=true;const note=$('nt').value.trim(),g=!rec&&S&&S.enforce&&S.office_lat!=null;let c=null;
+  if(g){try{c=await pos()}catch(e){toast('ไม่พบตำแหน่ง กรุณาเปิด GPS และอนุญาตให้เว็บเข้าถึงตำแหน่ง');b.disabled=false;return}
+    const d=Math.round(dm(c.latitude,c.longitude,S.office_lat,S.office_lng));if(d>S.radius_m){toast('อยู่นอกพื้นที่ทำงาน (ห่าง '+d+' ม. ต้องไม่เกิน '+S.radius_m+' ม.)');b.disabled=false;return}}
+  const r=!rec?await sb.from('attendance').insert({place:g?'สำนักงานใหญ่':$('pl').value,note,lat:c?.latitude,lng:c?.longitude}):await sb.from('attendance').update({clock_out:new Date().toISOString(),...(note?{note}:{}),out_lat:c?.latitude,out_lng:c?.longitude}).eq('id',rec.id);
+  if(r.error)toast('บันทึกไม่สำเร็จ: '+r.error.message);else{toast(rec?'ออกงานเรียบร้อย':'เข้างานเรียบร้อย');$('nt').value=''}await loadToday()};
+async function hist(){$('hl').textContent=lab(hy);$('hn').disabled=hy>=ymNow();const[a,b]=range(hy);
+  const{data}=await sb.from('attendance_v').select('*').gte('work_date',a).lt('work_date',b).order('work_date',{ascending:false});
+  const ot=(data||[]).reduce((s,r)=>s+r.ot_min,0);$('hs').innerHTML='<div class="g" style="margin-bottom:6px"><div><small>วันทำงาน</small><b>'+(data||[]).length+'</b></div><div><small>โอทีรวม</small><b class="ot">'+(ot/60).toFixed(1)+' ชม.</b></div></div>'+rows(data||[])}
+function gfShow(){$('gf').textContent=S&&S.enforce&&S.office_lat!=null?'เปิดใช้งาน · รัศมี '+S.radius_m+' ม. · พิกัด '+S.office_lat.toFixed(5)+', '+S.office_lng.toFixed(5):'ยังไม่จำกัดพื้นที่ (ลงเวลาได้ทุกที่)';if(S)$('gr').value=S.radius_m}
+$('gb').onclick=async()=>{let c;try{c=await pos()}catch(e){return toast('ไม่พบตำแหน่ง กรุณาเปิด GPS ขณะอยู่ที่ที่ทำงาน')}
+  const{data,error}=await sb.from('settings').update({office_lat:c.latitude,office_lng:c.longitude,radius_m:+$('gr').value||150,enforce:true}).eq('id',1).select().single();if(error)return toast(error.message);S=data;gfShow();fenceChanged();toast('ตั้งพื้นที่ทำงานแล้ว')};
+$('gx').onclick=async()=>{const{data,error}=await sb.from('settings').update({enforce:false}).eq('id',1).select().single();if(error)return toast(error.message);S=data;gfShow();fenceChanged();toast('ปิดการจำกัดพื้นที่แล้ว')};
+$('sl').value=location.origin+location.pathname+'#u='+SB_URL+'&k='+SB_KEY;
+$('sc').onclick=async()=>{try{await navigator.clipboard.writeText($('sl').value);toast('คัดลอกลิงก์แล้ว')}catch(e){$('sl').select();toast('แตะค้างที่ช่องแล้วเลือกคัดลอก')}};
+async function admin(){gfShow();$('gl').textContent=lab(gy);$('gn').disabled=gy>=ymNow();$('gs').innerHTML='กำลังโหลด…';const[a,b]=range(gy),t=today();
+  const[p,r]=await Promise.all([sb.from('profiles').select('*').eq('active',true).order('name'),sb.from('attendance_v').select('*').gte('work_date',a).lt('work_date',b).order('work_date',{ascending:false})]);
+  const by={};(r.data||[]).forEach(x=>(by[x.user_id]=by[x.user_id]||[]).push(x));
+  $('gs').innerHTML=(p.data||[]).map(u=>{const l=by[u.id]||[],o=l.reduce((s,x)=>s+x.ot_min,0),td=l.find(x=>x.work_date===t);
+    const st=gy!==ymNow()?'':!td?'<span class="chip">ยังไม่เข้า</span>':td.clock_out?'<span class="chip">ออกแล้ว '+hm(td.clock_out)+'</span>':'<span class="chip ok">กำลังทำงาน '+hm(td.clock_in)+'</span>';
+    return '<details><summary><div><b>'+esc(u.name)+'</b><small style="display:block;color:var(--mute);font-size:12.5px">'+esc(u.dept||'-')+' · '+esc(u.code)+' · '+l.length+' วัน · สาย '+l.filter(x=>x.late).length+'</small></div><div>'+(o?'<span class="chip ot">โอที '+fmt(o)+'</span>':'')+st+'</div></summary>'+
+    '<div class="it" style="align-items:center"><span>เวลาเข้างาน</span><span><input type="time" value="'+tm(u.shift_start)+'" style="width:auto;margin:0;padding:6px"><button class="sm" data-s="'+u.id+'">บันทึก</button></span></div>'+
+    '<div class="it"><span>รหัสผ่าน</span><button class="sm" data-p="'+u.id+'">ตั้งรหัสใหม่</button></div>'+rows(l)+'</details>'}).join('')||'ยังไม่มีพนักงาน'}
+$('gs').onclick=async e=>{const s=e.target.dataset.s,p=e.target.dataset.p;
+  if(s){const v=e.target.parentNode.querySelector('input').value,m=+v.slice(0,2)*60+ +v.slice(3);const{error}=await sb.from('profiles').update({shift_start:m}).eq('id',s);toast(error?error.message:'ตั้งเวลาเข้างาน '+v+' แล้ว (มีผลกับการลงเวลาครั้งถัดไป)')}
+  if(p){const pw=prompt('รหัสผ่านใหม่ (6 ตัวขึ้นไป)');if(!pw)return;const{data,error}=await sb.functions.invoke('manage-employee',{body:{action:'password',id:p,password:pw}});toast(error||data?.error?'ไม่สำเร็จ: '+(data?.error||error.message):'เปลี่ยนรหัสผ่านแล้ว')}};
+$('ab').onclick=async()=>{const v=$('as').value,body={action:'create',code:$('ac').value,name:$('an').value.trim(),dept:$('ad').value.trim(),password:$('ap').value,shift_start:+v.slice(0,2)*60+ +v.slice(3)};
+  const{data,error}=await sb.functions.invoke('manage-employee',{body});if(error||data?.error)return toast('ไม่สำเร็จ: '+(data?.error||error.message));
+  toast('เพิ่ม '+body.name+' แล้ว');['ac','an','ad','ap'].forEach(i=>$(i).value='');admin()};
+
+function go(n){tab=n;[1,2,3].forEach(i=>{$('p'+i).classList.toggle('hide',i!=n);$('n'+i).classList.toggle('on',i==n)});if(n==2){hy=ymNow();hist()}if(n==3)admin()}
+[1,2,3].forEach(i=>$('n'+i).onclick=()=>go(i));
+$('hp').onclick=()=>{hy=shift(hy,-1);hist()};$('hn').onclick=()=>{hy=shift(hy,1);hist()};$('gp').onclick=()=>{gy=shift(gy,-1);admin()};$('gn').onclick=()=>{gy=shift(gy,1);admin()};
+$('lg').onclick=async()=>{const{error}=await sb.auth.signInWithPassword({email:(v=>v.includes('@')?v:v+'@hr.local')($('lc').value.trim().toLowerCase()),password:$('lp').value});if(error)toast('รหัสพนักงานหรือรหัสผ่านไม่ถูกต้อง');else boot()};
+$('lo').onclick=async()=>{await sb.auth.signOut();location.reload()};
+async function boot(){if(SB_URL.includes('YOUR-PROJECT')){document.body.innerHTML='<div class="app"><div class="card"><b style="font-size:18px">FriendShip หมาล่า</b><div style="color:var(--mute);font-size:13px">ตั้งค่าเชื่อมต่อครั้งแรก (Supabase > Project Settings > API)</div><label>Project URL</label><input id="cu" placeholder="https://xxxx.supabase.co" autocapitalize="off"><label>anon public key</label><input id="ck" autocapitalize="off"><button class="big pri" id="cs">บันทึก</button></div></div>';document.getElementById('cs').onclick=()=>{const u=document.getElementById('cu').value.trim().replace(/\/$/,''),k=document.getElementById('ck').value.trim();if(!/^https:\/\/.+\.supabase\.co$/.test(u)||k.length<20){alert('URL หรือ key ไม่ถูกต้อง');return}ls.s('fs_u',u);ls.s('fs_k',k);location.reload()};return}
+const{data:{session}}=await sb.auth.getSession();
+  if(!session){$('login').classList.remove('hide');$('main').classList.add('hide');$('nv').classList.add('hide');return}
+  const{data}=await sb.from('profiles').select('*').eq('id',session.user.id).single();me=data;if(!me){await sb.auth.signOut();return}
+  S=(await sb.from('settings').select('*').eq('id',1).maybeSingle()).data;if(S&&S.enforce&&S.office_lat!=null){$('pl').classList.add('hide');$('pl').previousElementSibling.classList.add('hide');watchStart()}
+  $('login').classList.add('hide');$('main').classList.remove('hide');$('nv').classList.remove('hide');
+  $('nm').textContent=me.name;$('dp').textContent=(me.role==='admin'?'ส่วนกลาง':me.dept||'พนักงาน')+' · เข้างาน '+tm(me.shift_start);
+  $('n3').classList.toggle('hide',me.role!=='admin');go(1);loadToday()}
+boot();
+</script></body></html>
