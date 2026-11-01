@@ -63,7 +63,7 @@ const wm=r=>r.out?r.worked_min:Math.max(0,Math.round((Date.now()-new Date(r.cloc
 let me,rec,tab=1,hy=ymNow(),gy=ymNow();
 setInterval(()=>{const n=new Date();$('ck').textContent=n.toLocaleTimeString('en-GB',{timeZone:TZ});$('dt').textContent=n.toLocaleDateString('th-TH',{timeZone:TZ,weekday:'long',day:'numeric',month:'long',year:'numeric'});if(rec&&!rec.clock_out)live()},1000);
 function live(){const m=wm({clock_in:rec.clock_in});$('c').textContent=fmt(m);$('d').textContent=m>720?fmt(m-720):'0'}
-function chips(r,t,u){let h=r.late?'<span class="chip late">มาสาย</span>':'<span class="chip ok">ตรงเวลา</span>';if(!r.clock_out&&r.work_date!==t)h='<span class="chip miss">ลืมลงเวลาออก</span>';if(r.ot_min>0&&!(u&&u.pay_type==='monthly'))h+='<span class="chip ot">โอที '+fmt(r.ot_min)+'</span>';return h}
+function chips(r,t,u){let h=r.late?'<span class="chip late">มาสาย</span>':'<span class="chip ok">ตรงเวลา</span>';if(!r.clock_out&&Date.now()-new Date(r.clock_in)>20*36e5)h='<span class="chip miss">ลืมลงเวลาออก</span>';if(r.ot_min>0&&!(u&&u.pay_type==='monthly'))h+='<span class="chip ot">โอที '+fmt(r.ot_min)+'</span>';return h}
 const mm=n=>'฿'+Number(n).toLocaleString('th-TH',{maximumFractionDigits:2});
 const DOFF=['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์','ไม่มี'],dfmt=d=>new Date(d+'T00:00:00').toLocaleDateString('th-TH',{weekday:'short',day:'numeric',month:'short'});
 function mAbs(u,ym,dates){const[y,m]=ym.split('-').map(Number),n=new Date(Date.UTC(y,m,0)).getUTCDate(),td=today(),off=+u.day_off,st=u.hired_on||'0000-00-00';let work=0,abs=[],offd=0;
@@ -72,10 +72,12 @@ function mAbs(u,ym,dates){const[y,m]=ym.split('-').map(Number),n=new Date(Date.U
 function payl(r,u){if(u&&u.pay_type==='monthly')return '';if(r.ot_paid_at)return '<small>ค่าแรง '+mm(r.wage_paid_amount||0)+' · โอที '+mm(r.ot_paid_amount||0)+'</small><span class="chip ok">จ่ายแล้ว</span>';
   if(!r.clock_out||!u)return '';const w=+u.daily_wage||0,o=Math.round(r.ot_min/60*(+u.ot_rate||0)*100)/100;if(!w&&!o)return '';
   return '<small>ค่าแรง '+mm(w)+' · โอที '+mm(o)+'</small><span class="chip">รอจ่าย</span>'}
-const rows=(a,u)=>{const t=today();return a.map(r=>'<div class="it"><div><b>'+new Date(r.work_date+'T00:00:00').toLocaleDateString('th-TH',{weekday:'short',day:'numeric',month:'short'})+'</b><small>'+esc(r.place)+(r.note?' · '+esc(r.note):'')+'</small></div><div>'+hm(r.clock_in)+' – '+(r.clock_out?hm(r.clock_out):'--:--')+'<small>'+(r.clock_out?fmt(r.worked_min):'')+'</small>'+chips(r,t,u)+payl(r,u)+'</div></div>').join('')||'<div style="color:var(--mute);text-align:center">ไม่มีข้อมูล</div>'};
+const dB=i=>new Date(i).toLocaleDateString('en-CA',{timeZone:TZ});
+const rows=(a,u)=>{const t=today();return a.map(r=>'<div class="it"><div><b>'+new Date(r.work_date+'T00:00:00').toLocaleDateString('th-TH',{weekday:'short',day:'numeric',month:'short'})+'</b><small>'+esc(r.place)+(r.note?' · '+esc(r.note):'')+'</small></div><div>'+hm(r.clock_in)+' – '+(r.clock_out?hm(r.clock_out)+(dB(r.clock_out)>r.work_date?' (+1)':''):'--:--')+'<small>'+(r.clock_out?fmt(r.worked_min):'')+'</small>'+chips(r,t,u)+payl(r,u)+'</div></div>').join('')||'<div style="color:var(--mute);text-align:center">ไม่มีข้อมูล</div>'};
 const range=y=>[y+'-01',shift(y,1)+'-01'];
 
-async function loadToday(){const{data}=await sb.from('attendance_v').select('*').eq('work_date',today()).maybeSingle();rec=data;
+async function loadToday(){/* กะข้ามเที่ยงคืน: ใช้รายการล่าสุดของตัวเอง ถ้ายังไม่ออกงานภายใน 20 ชม. หรือออกงานแล้วไม่เกิน 18 ชม. ถือเป็นกะปัจจุบัน */
+  const{data:ls}=await sb.from('attendance_v').select('*').eq('user_id',me.id).order('clock_in',{ascending:false}).limit(1);const L=ls&&ls[0],age=L?(Date.now()-new Date(L.clock_in))/36e5:99;rec=L&&((!L.clock_out&&age<20)||(L.clock_out&&age<18))?L:null;
   $('a').textContent=rec?hm(rec.clock_in):'--:--';$('b').textContent=rec?.clock_out?hm(rec.clock_out):'--:--';
   const b=$('bt');if(!rec){if(S&&S.enforce&&S.office_lat!=null)areaBtn(b);else{b.textContent='เข้างาน';b.className='big';b.disabled=false}$('c').textContent=$('d').textContent='--'}
   else if(!rec.clock_out){b.textContent='ออกงาน';b.className='big out';b.disabled=false;live()}
@@ -113,7 +115,7 @@ async function admin(){gfShow();$('gl').textContent=lab(gy);$('gn').disabled=gy>
   const[p,r,sp]=await Promise.all([sb.from('profiles').select('*').eq('active',true).order('name'),sb.from('attendance_v').select('*').gte('work_date',a).lt('work_date',b).order('work_date',{ascending:false}),sb.from('salary_payments').select('*').eq('ym',gy)]);
   const sps={};(sp.data||[]).forEach(x=>sps[x.user_id]=x);
   const by={};(r.data||[]).forEach(x=>(by[x.user_id]=by[x.user_id]||[]).push(x));
-  $('gs').innerHTML=(p.data||[]).map(u=>{const l=by[u.id]||[],o=l.reduce((s,x)=>s+x.ot_min,0),td=l.find(x=>x.work_date===t),pd=l.filter(x=>x.ot_paid_at),pw=pd.reduce((a,x)=>a+(+x.wage_paid_amount||0),0),po=pd.reduce((a,x)=>a+(+x.ot_paid_amount||0),0),pl=pd.length?pd.map(x=>x.ot_paid_at).sort().pop():null;
+  $('gs').innerHTML=(p.data||[]).map(u=>{const l=by[u.id]||[],o=l.reduce((s,x)=>s+x.ot_min,0),td=l.find(x=>x.work_date===t)||l.find(x=>!x.clock_out&&Date.now()-new Date(x.clock_in)<20*36e5),pd=l.filter(x=>x.ot_paid_at),pw=pd.reduce((a,x)=>a+(+x.wage_paid_amount||0),0),po=pd.reduce((a,x)=>a+(+x.ot_paid_amount||0),0),pl=pd.length?pd.map(x=>x.ot_paid_at).sort().pop():null;
     const st=gy!==ymNow()?'':!td?'<span class="chip">ยังไม่เข้า</span>':td.clock_out?'<span class="chip">ออกแล้ว '+hm(td.clock_out)+'</span>':'<span class="chip ok">กำลังทำงาน '+hm(td.clock_in)+'</span>';
     const mo=u.pay_type==='monthly',spd=sps[u.id],M=mo?mAbs(u,gy,new Set(l.map(x=>x.work_date))):null;
     const typ='<div class="it" style="align-items:center"><span>ประเภทพนักงาน</span><select data-t="'+u.id+'" style="width:auto;margin:0;padding:6px"><option value="daily"'+(mo?'':' selected')+'>รายวัน</option><option value="monthly"'+(mo?' selected':'')+'>รายเดือน</option></select></div>';
