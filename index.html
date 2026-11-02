@@ -44,7 +44,7 @@ nav button{flex:1;border:0;background:none;padding:14px 0;color:var(--mute);font
 <div style="display:flex;justify-content:space-between;align-items:center"><div><b id="nm"></b><div id="dp" style="color:var(--mute);font-size:13px"></div></div><button class="sm" id="lo" style="background:var(--bg);color:var(--ink);border:1px solid var(--line)">ออก</button></div>
 <section id="p1"><div class="hero"><div id="dt"></div><div class="clock" id="ck"></div></div>
 <div class="card"><label style="margin:0">สถานที่</label><select id="pl"><option>สำนักงานใหญ่</option><option>ทำงานที่บ้าน (WFH)</option><option>นอกสถานที่</option></select>
-<label>หมายเหตุ</label><input id="nt" maxlength="80"><div id="oh" class="hint hide"><b>เข้างานนอกพื้นที่ต้องใส่เหตุผลในช่องหมายเหตุ</b> เวลาเข้างานจะถูกบันทึกทันที แต่ต้องรอส่วนกลางอนุมัติก่อนนำไปคิดค่าแรง</div><button class="big" id="bt">เข้างาน</button><div id="ap"></div></div>
+<label>หมายเหตุ</label><input id="nt" maxlength="80"><div id="oh" class="hint hide"><b>เข้างานนอกพื้นที่ต้องใส่เหตุผลในช่องหมายเหตุ</b> เวลาเข้างานจะถูกบันทึกทันที แต่ต้องรอส่วนกลางอนุมัติก่อนนำไปคิดค่าแรง</div><button class="big" id="bt">เข้างาน</button><div id="apv"></div></div>
 <div class="card g"><div><small>เข้างาน</small><b id="a">--:--</b></div><div><small>ออกงาน</small><b id="b">--:--</b></div><div><small>ชั่วโมงทำงาน</small><b id="c">--</b></div><div><small>โอที (เกิน 12 ชม.)</small><b id="d" class="ot">--</b></div></div></section>
 <section id="p2" class="hide"><div class="bar"><button id="hp">‹</button><b id="hl"></b><button id="hn">›</button></div><div class="card" id="hs"></div></section>
 <section id="p3" class="hide"><div class="bar"><button id="gp">‹</button><b id="gl"></b><button id="gn">›</button></div>
@@ -164,7 +164,7 @@ $('gs').onclick=async e=>{if(e.target.dataset.e){openEd(RECS[e.target.dataset.e]
   if(wg){const v=+e.target.parentNode.querySelector('input').value;if(!(v>=0))return toast('ค่าแรงไม่ถูกต้อง');const{error}=await sb.from('profiles').update({daily_wage:v}).eq('id',wg);toast(error?error.message:'ตั้งค่าแรงรายวัน '+v+' บาท แล้ว (ใช้กับการจ่ายครั้งถัดไป)')}
   if(rt){const v=+e.target.parentNode.querySelector('input').value;if(!(v>=0))return toast('อัตราไม่ถูกต้อง');const{error}=await sb.from('profiles').update({ot_rate:v}).eq('id',rt);toast(error?error.message:'ตั้งอัตราโอที '+v+' บาท/ชม. แล้ว (ใช้กับการจ่ายครั้งถัดไป)')}
   if(s){const v=e.target.parentNode.querySelector('input').value,m=+v.slice(0,2)*60+ +v.slice(3);const{error}=await sb.from('profiles').update({shift_start:m}).eq('id',s);toast(error?error.message:'ตั้งเวลาเข้างาน '+v+' แล้ว (มีผลกับการลงเวลาครั้งถัดไป)')}
-  if(p){const pw=prompt('รหัสผ่านใหม่ (6 ตัวขึ้นไป)');if(!pw)return;const{data,error}=await sb.functions.invoke('manage-employee',{body:{action:'password',id:p,password:pw}});toast(error||data?.error?'ไม่สำเร็จ: '+(data?.error||error.message):'เปลี่ยนรหัสผ่านแล้ว')}};
+  if(p){const pw=prompt('รหัสผ่านใหม่ (6 ตัวขึ้นไป)');if(!pw)return;const{data,error}=await fnCall({action:'password',id:p,password:pw});toast(error||data?.error?'ไม่สำเร็จ: '+(data?.error||error.message):'เปลี่ยนรหัสผ่านแล้ว')}};
 const det=x=>{const wg=+x.u.daily_wage||0,rt=+x.u.ot_rate||0,ot=x.rows.filter(r=>r.ot_min>0),oth=x.rows.length-ot.length,R=(a,b,c)=>'<div class="it" style="padding:7px 0;font-size:13px"><div>'+a+'</div><div>'+b+'</div></div>';
   return '<details style="border:0;padding:0 0 8px 26px"><summary style="color:var(--pri);font-size:13px">ดูรายละเอียดรายวัน</summary>'+
    ot.map(r=>R('<b>'+new Date(r.work_date+'T00:00:00').toLocaleDateString('th-TH',{weekday:'short',day:'numeric',month:'short'})+'</b><small>'+hm(r.clock_in)+'–'+hm(r.clock_out)+' ('+fmt(r.worked_min)+')</small>','ค่าแรง '+mm(wg)+'<small style="color:var(--ot)">โอที '+fmt(r.ot_min)+' = '+mm(Math.round(r.ot_min/60*rt*100)/100)+'</small>')).join('')+
@@ -194,7 +194,7 @@ $('ob').onclick=async()=>{const el=$('ov');el.innerHTML='กำลังคำ�
     if(mi.length){const{data,error}=await sb.rpc('pay_monthly',{p_users:mi,p_ym:gy});if(error)return toast('ไม่สำเร็จ: '+error.message);n+=(data||[]).length}
     {const sv=cs.map(c=>c.value).filter(id=>advOf(id)>0);if(sv.length)await sb.rpc('settle_advances',{p_users:sv})}toast('บันทึกการจ่ายแล้ว '+n+' คน');el.innerHTML='';admin()}};
 $('ab').onclick=async()=>{const v=$('as').value,body={action:'create',code:$('ac').value,name:$('an').value.trim(),dept:$('ad').value.trim(),password:$('ap').value,shift_start:+v.slice(0,2)*60+ +v.slice(3)};
-  const{data,error}=await sb.functions.invoke('manage-employee',{body});if(error||data?.error){let m=data?.error||error.message;try{if(error&&error.context&&error.context.json){const j=await error.context.json();m=j.error||m}}catch(e){}if(/already been registered|already registered|duplicate|exists/i.test(m))m='รหัสพนักงานนี้มีอยู่แล้ว (หรือค้างอยู่ในระบบ) ลองใช้รหัสอื่น';if(m==='forbidden')m='บัญชีนี้ไม่มีสิทธิ์เพิ่มพนักงาน (ต้องเป็นแอดมิน)';return toast('ไม่สำเร็จ: '+m)}
+  const{data,error}=await fnCall(body);if(error||data?.error){let m=data?.error||error.message;try{if(error&&error.context&&error.context.json){const j=await error.context.json();m=j.error||m}}catch(e){}if(/already been registered|already registered|duplicate|exists/i.test(m))m='รหัสพนักงานนี้มีอยู่แล้ว (หรือค้างอยู่ในระบบ) ลองใช้รหัสอื่น';if(m==='forbidden')m='บัญชีนี้ไม่มีสิทธิ์เพิ่มพนักงาน (ต้องเป็นแอดมิน)';return toast('ไม่สำเร็จ: '+m)}
   toast('เพิ่ม '+body.name+' แล้ว');['ac','an','ad','ap'].forEach(i=>$(i).value='');admin()};
 
 function go(n){tab=n;[1,2,3].forEach(i=>{$('p'+i).classList.toggle('hide',i!=n);$('n'+i).classList.toggle('on',i==n)});if(n==2){hy=ymNow();hist()}if(n==3)admin()}
@@ -213,6 +213,8 @@ const{data:{session}}=await sb.auth.getSession();
 /* ===== v7: ปฏิทิน / คำขอ / วันหยุด / เบิกล่วงหน้า / สลิป / ส่งออก / ยกเลิกจ่าย ===== */
 const VIEW=()=>!!me&&me.role==='viewer',STAFF=()=>!!me&&(me.role==='admin'||me.role==='viewer'),AVN=()=>VIEW()?'attendance_vw':'attendance_v',PRN=()=>VIEW()?'profiles_pub':'profiles';
 let HOLS={},LVS={},REQ=[],ADV=[],PROFS=[],CAL=null,WHO='all',SELD=null,PRE='',NOROWS=false;
+/* ส่งโทเคนผู้ใช้ให้ฟังก์ชันเสมอ (กันกรณีเปิดแอปด้วยเซสชันเดิมแล้วถูกมองว่าไม่ได้ล็อกอิน) */
+const fnCall=async body=>{const{data:{session}}=await sb.auth.getSession();return sb.functions.invoke('manage-employee',{body,headers:session?{Authorization:'Bearer '+session.access_token}:{}})};
 const advOf=id=>ADV.filter(a=>a.user_id===id&&!a.settled_at).reduce((s,a)=>s+ +a.amount,0);
 async function loadMeta(){const[h,r,a]=await Promise.all([sb.from('holidays').select('*').order('day'),sb.from('requests').select('*').order('created_at',{ascending:false}),sb.from('advances').select('*').order('on_date',{ascending:false})]);
   HOLS={};(h.data||[]).forEach(x=>HOLS[x.day]=x.name);REQ=r.data||[];LVS={};REQ.filter(x=>x.kind==='leave'&&x.status==='approved').forEach(x=>(LVS[x.user_id]=LVS[x.user_id]||new Set()).add(x.work_date));ADV=a.data||[]}
@@ -351,7 +353,7 @@ const okA=r=>!r.approval||r.approval==='approved';
 function btnState(){const b=$('bt'),off=$('pl').value!=='สำนักงานใหญ่',fence=S&&S.enforce&&S.office_lat!=null;$('oh').classList.toggle('hide',!off||!!rec);
   if(off){b.textContent='เข้างานและขออนุมัติ';b.className='big w';b.disabled=false;return}
   if(fence)areaBtn(b);else{b.textContent='เข้างาน';b.className='big';b.disabled=false}}
-function apShow(){$('pl').disabled=!!rec;if(rec)$('oh').classList.add('hide');const e=$('ap');if(!rec||!rec.approval){e.innerHTML='';return}
+function apShow(){$('pl').disabled=!!rec;if(rec)$('oh').classList.add('hide');const e=$('apv');if(!rec||!rec.approval){e.innerHTML='';return}
   const m={pending:['late','รออนุมัติจากส่วนกลาง เวลาเข้างานถูกบันทึกแล้ว จะนำไปคิดค่าแรงหลังอนุมัติ'],approved:['ok','ส่วนกลางอนุมัติแล้ว'],rejected:['miss','ส่วนกลางไม่อนุมัติรายการนี้ กรุณาติดต่อส่วนกลาง']}[rec.approval];
   e.innerHTML='<div class="hint" style="margin-top:10px"><b class="'+m[0]+'">'+esc(rec.place)+'</b> · '+m[1]+'</div>'}
 $('pl').onchange=btnState;
