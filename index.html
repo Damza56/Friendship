@@ -35,12 +35,12 @@ nav button{flex:1;border:0;background:none;padding:14px 0;color:var(--mute);font
 .lg{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--mute);margin-top:8px}.lg i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px}.av{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
 .chip{white-space:nowrap}.warnb{background:rgba(183,121,31,.13);border:1px solid var(--warn);border-radius:12px;padding:10px 12px;margin:0 0 10px;font-size:14px}
 </style></head><body><div class="app">
-<div id="login" class="card hide"><b style="font-size:18px">FriendShip หมาล่า</b><div style="color:var(--mute);font-size:13px">เข้าสู่ระบบลงเวลา</div>
+<div id="login" class="card hide"><img src="icon.png" alt="" style="width:44px;height:44px;border-radius:10px;vertical-align:middle;margin-right:8px"><b style="font-size:18px;vertical-align:middle">FriendShip หมาล่า</b><div style="color:var(--mute);font-size:13px">เข้าสู่ระบบลงเวลา</div>
 <label>รหัสพนักงาน (ส่วนกลางใช้อีเมลที่สร้างไว้ได้)</label><input id="lc" autocapitalize="off" autocomplete="username">
 <label>รหัสผ่าน</label><input id="lp" type="password" autocomplete="current-password">
 <button class="big pri" id="lg">เข้าสู่ระบบ</button></div>
 
-<div id="main" class="hide"><div style="font-weight:700;font-size:18px;margin-bottom:10px;color:var(--pri)">FriendShip หมาล่า</div>
+<div id="main" class="hide"><div style="font-weight:700;font-size:18px;margin-bottom:10px;color:var(--pri);display:flex;align-items:center;gap:8px"><img src="icon.png" alt="" style="width:30px;height:30px;border-radius:8px">FriendShip หมาล่า</div>
 <div style="display:flex;justify-content:space-between;align-items:center"><div><b id="nm"></b><div id="dp" style="color:var(--mute);font-size:13px"></div></div><button class="sm" id="lo" style="background:var(--bg);color:var(--ink);border:1px solid var(--line)">ออก</button></div>
 <section id="p1"><div class="hero"><div id="dt"></div><div class="clock" id="ck"></div></div>
 <div class="card"><label style="margin:0">สถานที่</label><select id="pl"><option>สำนักงานใหญ่</option><option>ทำงานที่บ้าน (WFH)</option><option>นอกสถานที่</option></select>
