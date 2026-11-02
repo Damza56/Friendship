@@ -62,7 +62,8 @@ const toast=t=>{const e=$('t');e.textContent=t;e.classList.add('s');setTimeout((
 const wm=r=>r.out?r.worked_min:Math.max(0,Math.round((Date.now()-new Date(r.clock_in))/6e4));
 let me,rec,tab=1,hy=ymNow(),gy=ymNow();
 setInterval(()=>{const n=new Date();$('ck').textContent=n.toLocaleTimeString('en-GB',{timeZone:TZ});$('dt').textContent=n.toLocaleDateString('th-TH',{timeZone:TZ,weekday:'long',day:'numeric',month:'long',year:'numeric'});if(rec&&!rec.clock_out)live()},1000);
-function live(){const m=wm({clock_in:rec.clock_in});$('c').textContent=fmt(m);$('d').textContent=m>720?fmt(m-720):'0'}
+function effIn(ci,wd,sh){const c=new Date(ci).getTime(),st=new Date(wd+'T00:00:00+07:00').getTime()+sh*6e4;return c<=st-30*6e4?c:Math.max(c,st)}
+function live(){const m=wm({clock_in:rec.clock_in}),o=Math.max(0,Math.round((Date.now()-effIn(rec.clock_in,rec.work_date,me.shift_start))/6e4)-720);$('c').textContent=fmt(m);$('d').textContent=o?fmt(o):'0'}
 function chips(r,t,u){let h=r.late?'<span class="chip late">มาสาย</span>':'<span class="chip ok">ตรงเวลา</span>';if(!r.clock_out&&Date.now()-new Date(r.clock_in)>20*36e5)h='<span class="chip miss">ลืมลงเวลาออก</span>';if(r.ot_min>0&&!(u&&u.pay_type==='monthly'))h+='<span class="chip ot">โอที '+fmt(r.ot_min)+'</span>';return h}
 const mm=n=>'฿'+Number(n).toLocaleString('th-TH',{maximumFractionDigits:2});
 const DOFF=['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์','ไม่มี'],dfmt=d=>new Date(d+'T00:00:00').toLocaleDateString('th-TH',{weekday:'short',day:'numeric',month:'short'});
