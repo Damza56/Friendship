@@ -41,7 +41,7 @@ nav button{flex:1;border:0;background:none;padding:14px 0;color:var(--mute);font
 <button class="big pri" id="lg">เข้าสู่ระบบ</button></div>
 
 <div id="main" class="hide"><div style="font-weight:700;font-size:18px;margin-bottom:10px;color:var(--pri);display:flex;align-items:center;gap:8px"><img src="icon.png" alt="" style="width:30px;height:30px;border-radius:8px">FriendShip หมาล่า</div>
-<div style="display:flex;justify-content:space-between;align-items:center"><div><b id="nm"></b><div id="dp" style="color:var(--mute);font-size:13px"></div><div id="bv" class="hide" style="color:var(--mute);font-size:12px"></div></div><button class="sm" id="lo" style="background:var(--bg);color:var(--ink);border:1px solid var(--line)">ออก</button></div>
+<div style="display:flex;justify-content:space-between;align-items:center"><div><b id="nm"></b><div id="dp" style="color:var(--mute);font-size:13px"></div><div id="bv" class="hide" style="color:var(--mute);font-size:12px"></div><div id="ol" class="hide" style="color:#34d399;font-size:12px;margin-top:2px"></div></div><button class="sm" id="lo" style="background:var(--bg);color:var(--ink);border:1px solid var(--line)">ออก</button></div>
 <section id="p1"><div class="hero"><div id="dt"></div><div class="clock" id="ck"></div></div>
 <div class="card"><label style="margin:0">สถานที่</label><select id="pl"><option>สำนักงานใหญ่</option><option>ทำงานที่บ้าน (WFH)</option><option>นอกสถานที่</option></select>
 <label>หมายเหตุ</label><input id="nt" maxlength="80"><div id="oh" class="hint hide"><b>เข้างานนอกพื้นที่ต้องใส่เหตุผลในช่องหมายเหตุ</b> เวลาเข้างานจะถูกบันทึกทันที แต่ต้องรอส่วนกลางอนุมัติก่อนนำไปคิดค่าแรง</div><button class="big" id="bt">เข้างาน</button><div id="apv"></div></div>
@@ -209,13 +209,13 @@ const{data:{session}}=await sb.auth.getSession();
   S=(await sb.from('settings').select('*').eq('id',1).maybeSingle()).data;if(S&&S.enforce&&S.office_lat!=null){watchStart()}
   $('login').classList.add('hide');$('main').classList.remove('hide');$('nv').classList.remove('hide');
   $('nm').textContent=me.name;$('dp').textContent=(me.role==='admin'?'ส่วนกลาง':me.role==='viewer'?'ผู้ดูแล':me.dept||'พนักงาน')+' · เข้างาน '+tm(me.shift_start);
-  $('n3').classList.toggle('hide',!STAFF());$('n2').textContent=STAFF()?'ทุกคน':'ของฉัน';{const v=$('bv');if(String(me.code).toLowerCase()==='damza56'){v.textContent='อัปเดตแอปล่าสุด '+BUILD;v.classList.remove('hide')}}go(1);loadToday()}
+  $('n3').classList.toggle('hide',!STAFF());$('n2').textContent=STAFF()?'ทุกคน':'ของฉัน';{const v=$('bv'),own=String(me.code).toLowerCase()==='damza56';if(own){v.textContent='อัปเดตแอปล่าสุด '+BUILD;v.classList.remove('hide')}try{const ch=sb.channel('online-now',{config:{presence:{key:me.code+'-'+Math.random().toString(36).slice(2,7)}}});if(own)ch.on('presence',{event:'sync'},()=>{const st=ch.presenceState(),m={};Object.values(st).forEach(a=>a.forEach(p=>{m[p.code]=p.name}));const l=Object.keys(m).filter(c=>c.toLowerCase()!=='damza56').map(c=>m[c]);const o=$('ol');o.classList.remove('hide');o.textContent=l.length?'🟢 ออนไลน์ตอนนี้ ('+l.length+'): '+l.join(', '):'ไม่มีใครออนไลน์ตอนนี้'});ch.subscribe(async s=>{if(s==='SUBSCRIBED')await ch.track({code:me.code,name:me.name})})}catch(e){}}go(1);loadToday()}
 /* ===== v7: ปฏิทิน / คำขอ / วันหยุด / เบิกล่วงหน้า / สลิป / ส่งออก / ยกเลิกจ่าย ===== */
 const VIEW=()=>!!me&&me.role==='viewer',STAFF=()=>!!me&&(me.role==='admin'||me.role==='viewer'),AVN=()=>VIEW()?'attendance_vw':'attendance_v',PRN=()=>VIEW()?'profiles_pub':'profiles';
 let HOLS={},LVS={},REQ=[],ADV=[],PROFS=[],CAL=null,WHO='all',SELD=null,PRE='',NOROWS=false;
 /* ส่งโทเคนผู้ใช้ให้ฟังก์ชันเสมอ (กันกรณีเปิดแอปด้วยเซสชันเดิมแล้วถูกมองว่าไม่ได้ล็อกอิน) */
 const fnCall=async body=>{const{data:{session}}=await sb.auth.getSession();return sb.functions.invoke('manage-employee',{body,headers:session?{Authorization:'Bearer '+session.access_token}:{}})};
-const BUILD='2 พ.ย. 2569 เวลา 20:35 น. (เวอร์ชัน 12)';
+const BUILD='2 พ.ย. 2569 เวลา 21:00 น. (เวอร์ชัน 13)';
 const advOf=id=>ADV.filter(a=>a.user_id===id&&!a.settled_at).reduce((s,a)=>s+ +a.amount,0);
 async function loadMeta(){const[h,r,a]=await Promise.all([sb.from('holidays').select('*').order('day'),sb.from('requests').select('*').order('created_at',{ascending:false}),sb.from('advances').select('*').order('on_date',{ascending:false})]);
   HOLS={};(h.data||[]).forEach(x=>HOLS[x.day]=x.name);REQ=r.data||[];LVS={};REQ.filter(x=>x.kind==='leave'&&x.status==='approved').forEach(x=>(LVS[x.user_id]=LVS[x.user_id]||new Set()).add(x.work_date));ADV=a.data||[]}
