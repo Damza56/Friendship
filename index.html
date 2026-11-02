@@ -215,7 +215,7 @@ const VIEW=()=>!!me&&me.role==='viewer',STAFF=()=>!!me&&(me.role==='admin'||me.r
 let HOLS={},LVS={},REQ=[],ADV=[],PROFS=[],CAL=null,WHO='all',SELD=null,PRE='',NOROWS=false;
 /* ส่งโทเคนผู้ใช้ให้ฟังก์ชันเสมอ (กันกรณีเปิดแอปด้วยเซสชันเดิมแล้วถูกมองว่าไม่ได้ล็อกอิน) */
 const fnCall=async body=>{const{data:{session}}=await sb.auth.getSession();return sb.functions.invoke('manage-employee',{body,headers:session?{Authorization:'Bearer '+session.access_token}:{}})};
-const BUILD='2 พ.ย. 2569 เวลา 19:18 น. (เวอร์ชัน 11)';
+const BUILD='2 พ.ย. 2569 เวลา 20:35 น. (เวอร์ชัน 12)';
 const advOf=id=>ADV.filter(a=>a.user_id===id&&!a.settled_at).reduce((s,a)=>s+ +a.amount,0);
 async function loadMeta(){const[h,r,a]=await Promise.all([sb.from('holidays').select('*').order('day'),sb.from('requests').select('*').order('created_at',{ascending:false}),sb.from('advances').select('*').order('on_date',{ascending:false})]);
   HOLS={};(h.data||[]).forEach(x=>HOLS[x.day]=x.name);REQ=r.data||[];LVS={};REQ.filter(x=>x.kind==='leave'&&x.status==='approved').forEach(x=>(LVS[x.user_id]=LVS[x.user_id]||new Set()).add(x.work_date));ADV=a.data||[]}
@@ -344,7 +344,7 @@ async function viewerAdmin(){await loadMeta();PROFS=(await sb.from('profiles_pub
   const{data:r}=await sb.from('attendance_vw').select('*').gte('work_date',a).lt('work_date',b).order('work_date',{ascending:false}),{data:op}=await sb.from('attendance_vw').select('*').is('clock_out',null),{data:pa}=await sb.from('attendance_vw').select('*').eq('approval','pending');
   const by={};(r||[]).forEach(x=>(by[x.user_id]=by[x.user_id]||[]).push(x));const P=REQ.filter(x=>x.status==='pending'),PA=pa||[];
   $('n3').textContent='ส่วนกลาง';
-  $('rq').innerHTML='<div class="hint" style="margin:0 0 10px">สิทธิ์ผู้ดูแล (ดูอย่างเดียว): ดูข้อมูลได้ แก้ไขหรืออนุมัติไม่ได้ และไม่เห็นข้อมูลเงิน</div>'+staleHtml(op,PROFS,1)+
+  $('rq').innerHTML=''+staleHtml(op,PROFS,1)+
     ((P.length||PA.length)?'<div class="card"><b>รออนุมัติจากส่วนกลาง ('+(P.length+PA.length)+')</b>'+PA.map(x=>'<div class="it"><div><b>'+esc(nm(x.user_id))+'</b><small>'+esc(x.place)+' · เข้า '+hm(x.clock_in)+'</small><small>เหตุผล: '+esc(x.note||'-')+'</small></div><div><span class="chip late">รออนุมัติ</span></div></div>').join('')+P.map(x=>'<div class="it"><div><b>'+esc(nm(x.user_id))+'</b><small>'+(x.kind==='leave'?'ขอลา':'แจ้งลืมกดเวลา')+' · '+new Date(x.work_date+'T00:00:00').toLocaleDateString('th-TH',{day:'numeric',month:'short'})+'</small>'+(x.note?'<small>'+esc(x.note)+'</small>':'')+'</div><div><span class="chip late">รออนุมัติ</span></div></div>').join('')+'</div>':'');
   $('gs').innerHTML=PROFS.map(u=>{const l=by[u.id]||[],o=u.pay_type==='monthly'?0:l.filter(x=>x.clock_out).reduce((s,x)=>s+x.ot_min,0),td=l.find(x=>x.work_date===t)||l.find(x=>!x.clock_out&&Date.now()-new Date(x.clock_in)<20*36e5);
     const st=gy!==ymNow()?'':!td?'<span class="chip">ยังไม่เข้า</span>':td.clock_out?'<span class="chip">ออกแล้ว '+hm(td.clock_out)+'</span>':'<span class="chip ok">กำลังทำงาน '+hm(td.clock_in)+'</span>';
