@@ -194,7 +194,7 @@ $('ob').onclick=async()=>{const el=$('ov');el.innerHTML='กำลังคำ�
     if(mi.length){const{data,error}=await sb.rpc('pay_monthly',{p_users:mi,p_ym:gy});if(error)return toast('ไม่สำเร็จ: '+error.message);n+=(data||[]).length}
     {const sv=cs.map(c=>c.value).filter(id=>advOf(id)>0);if(sv.length)await sb.rpc('settle_advances',{p_users:sv})}toast('บันทึกการจ่ายแล้ว '+n+' คน');el.innerHTML='';admin()}};
 $('ab').onclick=async()=>{const v=$('as').value,body={action:'create',code:$('ac').value,name:$('an').value.trim(),dept:$('ad').value.trim(),password:$('ap').value,shift_start:+v.slice(0,2)*60+ +v.slice(3)};
-  const{data,error}=await sb.functions.invoke('manage-employee',{body});if(error||data?.error)return toast('ไม่สำเร็จ: '+(data?.error||error.message));
+  const{data,error}=await sb.functions.invoke('manage-employee',{body});if(error||data?.error){let m=data?.error||error.message;try{if(error&&error.context&&error.context.json){const j=await error.context.json();m=j.error||m}}catch(e){}if(/already been registered|already registered|duplicate|exists/i.test(m))m='รหัสพนักงานนี้มีอยู่แล้ว (หรือค้างอยู่ในระบบ) ลองใช้รหัสอื่น';if(m==='forbidden')m='บัญชีนี้ไม่มีสิทธิ์เพิ่มพนักงาน (ต้องเป็นแอดมิน)';return toast('ไม่สำเร็จ: '+m)}
   toast('เพิ่ม '+body.name+' แล้ว');['ac','an','ad','ap'].forEach(i=>$(i).value='');admin()};
 
 function go(n){tab=n;[1,2,3].forEach(i=>{$('p'+i).classList.toggle('hide',i!=n);$('n'+i).classList.toggle('on',i==n)});if(n==2){hy=ymNow();hist()}if(n==3)admin()}
