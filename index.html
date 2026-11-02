@@ -100,6 +100,8 @@ $('bt').onclick=async()=>{const b=$('bt');b.disabled=true;const note=$('nt').val
   if(r.error)toast('บันทึกไม่สำเร็จ: '+r.error.message);else{toast(rec?'ออกงานเรียบร้อย':'เข้างานเรียบร้อย');$('nt').value=''}await loadToday()};
 async function hist(){$('hl').textContent=lab(hy);$('hn').disabled=hy>=ymNow();const[a,b]=range(hy);
   const{data}=await sb.from('attendance_v').select('*').gte('work_date',a).lt('work_date',b).order('work_date',{ascending:false});
+  if(me.role==='admin'){const{data:ps}=await sb.from('profiles').select('*').eq('active',true).order('name'),by={};(data||[]).forEach(x=>(by[x.user_id]=by[x.user_id]||[]).push(x));
+    $('hs').innerHTML='<div style="color:var(--mute);font-size:13px;margin-bottom:6px">พนักงานทุกคน · '+(data||[]).length+' รายการในเดือนนี้</div>'+(ps||[]).map(u=>{const l=by[u.id]||[],o=l.reduce((a,x)=>a+x.ot_min,0);return '<details'+(l.length?' open':'')+'><summary><div><b>'+esc(u.name)+'</b><small style="display:block;color:var(--mute);font-size:12.5px">'+esc(u.dept||'-')+' · '+esc(u.code)+' · '+l.length+' วัน</small></div><div>'+(o&&u.pay_type!=='monthly'?'<span class="chip ot">โอที '+fmt(o)+'</span>':'')+'</div></summary>'+rows(l,u)+'</details>'}).join('');return}
   if(me.pay_type==='monthly'){const spd=(await sb.from('salary_payments').select('*').eq('ym',hy).maybeSingle()).data,M=mAbs(me,hy,new Set((data||[]).map(r=>r.work_date))),sal=spd?+spd.gross:M.sal,ded=spd?+spd.deduction:M.ded,ab=spd?spd.absent_days:M.abs.length,net=spd?+spd.net:M.net;
     $('hs').innerHTML='<div class="g" style="margin-bottom:6px"><div><small>เงินเดือน</small><b>'+mm(sal)+'</b></div><div><small>หักขาดงาน ('+ab+' วัน)</small><b class="miss">−'+mm(ded)+'</b></div><div><small>เงินเดือนสุทธิ</small><b>'+mm(net)+'</b></div><div><small>สถานะ</small><b class="'+(spd?'ok':'')+'">'+(spd?'จ่ายแล้ว':'รอจ่าย')+'</b></div></div>'+
     '<div class="it"><div><b>วันหยุดประจำสัปดาห์</b><small>'+DOFF[+me.day_off]+(+me.day_off<7?' ('+M.offd+' วัน) จ่ายเต็ม ไม่หัก':'')+'</small></div><div>มาทำงาน '+(data||[]).length+' วัน</div></div>'+
@@ -142,7 +144,7 @@ function openEd(r,uid){const o=document.createElement('div');o.id='ed';o.style.c
   document.body.appendChild(o);const close=()=>o.remove();$('ex').onclick=close;
   $('es').onclick=async()=>{const i=fromL($('ei').value),ou=fromL($('eo').value);if(!i)return toast('กรุณาใส่เวลาเข้างาน');
     const{error}=r?await sb.rpc('admin_edit_attendance',{p_id:r.id,p_in:i,p_out:ou}):await sb.rpc('admin_add_attendance',{p_user:uid,p_in:i,p_out:ou});
-    if(error)return toast('ไม่สำเร็จ: '+error.message);toast('บันทึกแล้ว');close();admin()};
+    if(error)return toast(/duplicate/i.test(error.message)?'วันที่นี้มีรายการอยู่แล้ว (อาจจ่ายเงินแล้ว) แก้ไขรายการเดิมแทนการเพิ่มใหม่':'ไม่สำเร็จ: '+error.message);toast('บันทึกแล้ว');close();admin()};
   if(r)$('edl').onclick=async()=>{if(!confirm('ลบรายการวันที่ '+r.work_date+' นี้?'))return;const{error}=await sb.rpc('admin_delete_attendance',{p_id:r.id});if(error)return toast('ไม่สำเร็จ: '+error.message);toast('ลบรายการแล้ว');close();admin()}}
 $('gs').onclick=async e=>{if(e.target.dataset.e){openEd(RECS[e.target.dataset.e]);return}if(e.target.dataset.ad){openEd(null,e.target.dataset.ad);return}
   const s=e.target.dataset.s,p=e.target.dataset.p,rt=e.target.dataset.r,wg=e.target.dataset.w,mo=e.target.dataset.m;
@@ -195,6 +197,6 @@ const{data:{session}}=await sb.auth.getSession();
   S=(await sb.from('settings').select('*').eq('id',1).maybeSingle()).data;if(S&&S.enforce&&S.office_lat!=null){$('pl').classList.add('hide');$('pl').previousElementSibling.classList.add('hide');watchStart()}
   $('login').classList.add('hide');$('main').classList.remove('hide');$('nv').classList.remove('hide');
   $('nm').textContent=me.name;$('dp').textContent=(me.role==='admin'?'ส่วนกลาง':me.dept||'พนักงาน')+' · เข้างาน '+tm(me.shift_start);
-  $('n3').classList.toggle('hide',me.role!=='admin');go(1);loadToday()}
+  $('n3').classList.toggle('hide',me.role!=='admin');$('n2').textContent=me.role==='admin'?'ทุกคน':'ของฉัน';go(1);loadToday()}
 boot();
 </script></body></html>
