@@ -42,7 +42,7 @@ nav button{flex:1;border:0;background:none;padding:14px 0;color:var(--mute);font
 
 <div id="main" class="hide"><div style="font-weight:700;font-size:18px;margin-bottom:10px;color:var(--pri);display:flex;align-items:center;gap:8px"><img src="icon.png" alt="" style="width:30px;height:30px;border-radius:8px">FriendShip หมาล่า</div>
 <div style="display:flex;justify-content:space-between;align-items:center"><div><b id="nm"></b><div id="dp" style="color:var(--mute);font-size:13px"></div><div id="bv" class="hide" style="color:var(--mute);font-size:12px"></div><div id="ol" class="hide" style="color:#34d399;font-size:12px;margin-top:2px"></div></div><button class="sm" id="lo" style="background:var(--bg);color:var(--ink);border:1px solid var(--line)">ออก</button></div>
-<section id="p1"><div class="hero"><div id="dt"></div><div class="clock" id="ck"></div></div><div id="pn" class="hide" style="margin:10px 0;font-size:13px;color:var(--mute)"></div>
+<section id="p1"><div class="hero"><div id="dt"></div><div class="clock" id="ck"></div></div><div id="fo"></div><div id="pn" class="hide" style="margin:10px 0;font-size:13px;color:var(--mute)"></div>
 <div class="card"><label style="margin:0">สถานที่</label><select id="pl"><option>สำนักงานใหญ่</option><option>ทำงานที่บ้าน (WFH)</option><option>นอกสถานที่</option></select>
 <label>หมายเหตุ</label><input id="nt" maxlength="80"><div id="oh" class="hint hide"><b>เข้างานนอกพื้นที่ต้องใส่เหตุผลในช่องหมายเหตุ</b> เวลาเข้างานจะถูกบันทึกทันที แต่ต้องรอส่วนกลางอนุมัติก่อนนำไปคิดค่าแรง</div><button class="big" id="bt">เข้างาน</button><div id="apv"></div></div>
 <div class="card g"><div><small>เข้างาน</small><b id="a">--:--</b></div><div><small>ออกงาน</small><b id="b">--:--</b></div><div><small>ชั่วโมงทำงาน</small><b id="c">--</b></div><div><small>โอที (เกิน 12 ชม.)</small><b id="d" class="ot">--</b></div></div></section>
@@ -201,7 +201,7 @@ function go(n){tab=n;[1,2,3].forEach(i=>{$('p'+i).classList.toggle('hide',i!=n);
 [1,2,3].forEach(i=>$('n'+i).onclick=()=>go(i));
 $('hp').onclick=()=>{hy=shift(hy,-1);hist()};$('hn').onclick=()=>{hy=shift(hy,1);hist()};$('gp').onclick=()=>{gy=shift(gy,-1);admin()};$('gn').onclick=()=>{gy=shift(gy,1);admin()};
 $('lg').onclick=async()=>{const{error}=await sb.auth.signInWithPassword({email:(v=>v.includes('@')?v:v+'@hr.local')($('lc').value.trim().toLowerCase()),password:$('lp').value});if(error)toast('รหัสพนักงานหรือรหัสผ่านไม่ถูกต้อง');else boot()};
-$('lo').onclick=async()=>{await sb.auth.signOut();location.reload()};
+$('lo').onclick=async()=>{try{if('serviceWorker' in navigator){const r=await navigator.serviceWorker.getRegistration(),sub=r&&await r.pushManager.getSubscription();if(sub){await sb.rpc('push_remove',{p_endpoint:sub.endpoint});await sub.unsubscribe()}}}catch(e){}await sb.auth.signOut();location.reload()};
 async function boot(){if(SB_URL.includes('YOUR-PROJECT')){document.body.innerHTML='<div class="app"><div class="card"><b style="font-size:18px">FriendShip หมาล่า</b><div style="color:var(--mute);font-size:13px">ตั้งค่าเชื่อมต่อครั้งแรก (Supabase > Project Settings > API)</div><label>Project URL</label><input id="cu" placeholder="https://xxxx.supabase.co" autocapitalize="off"><label>anon public key</label><input id="ck" autocapitalize="off"><button class="big pri" id="cs">บันทึก</button></div></div>';document.getElementById('cs').onclick=()=>{const u=document.getElementById('cu').value.trim().replace(/\/$/,''),k=document.getElementById('ck').value.trim();if(!/^https:\/\/.+\.supabase\.co$/.test(u)||k.length<20){alert('URL หรือ key ไม่ถูกต้อง');return}ls.s('fs_u',u);ls.s('fs_k',k);location.reload()};return}
 const{data:{session}}=await sb.auth.getSession();
   if(!session){$('login').classList.remove('hide');$('main').classList.add('hide');$('nv').classList.add('hide');return}
@@ -209,13 +209,13 @@ const{data:{session}}=await sb.auth.getSession();
   S=(await sb.from('settings').select('*').eq('id',1).maybeSingle()).data;if(S&&S.enforce&&S.office_lat!=null){watchStart()}
   $('login').classList.add('hide');$('main').classList.remove('hide');$('nv').classList.remove('hide');
   $('nm').textContent=me.name;$('dp').textContent=(me.role==='admin'?'ส่วนกลาง':me.role==='viewer'?'ผู้ดูแล':me.dept||'พนักงาน')+' · เข้างาน '+tm(me.shift_start);
-  $('n3').classList.toggle('hide',!STAFF());$('n2').textContent=STAFF()?'ทุกคน':'ของฉัน';{const v=$('bv'),own=String(me.code).toLowerCase()==='damza56';if(own){v.textContent='อัปเดตแอปล่าสุด '+BUILD;v.classList.remove('hide')}try{const ch=sb.channel('online-now',{config:{presence:{key:me.code+'-'+Math.random().toString(36).slice(2,7)}}});if(own)ch.on('presence',{event:'sync'},()=>{const st=ch.presenceState(),m={};Object.values(st).forEach(a=>a.forEach(p=>{m[p.code]=p.name}));const l=Object.keys(m).filter(c=>c.toLowerCase()!=='damza56').map(c=>m[c]);const o=$('ol');o.classList.remove('hide');o.textContent=l.length?'🟢 ออนไลน์ตอนนี้ ('+l.length+'): '+l.join(', '):'ไม่มีใครออนไลน์ตอนนี้'});ch.subscribe(async s=>{if(s==='SUBSCRIBED')await ch.track({code:me.code,name:me.name})})}catch(e){}}go(1);loadToday();pushInit()}
+  $('n3').classList.toggle('hide',!STAFF());$('n2').textContent=STAFF()?'ทุกคน':'ของฉัน';{const v=$('bv'),own=String(me.code).toLowerCase()==='damza56';if(own){v.textContent='อัปเดตแอปล่าสุด '+BUILD;v.classList.remove('hide')}try{const ch=sb.channel('online-now',{config:{presence:{key:me.code+'-'+Math.random().toString(36).slice(2,7)}}});if(own)ch.on('presence',{event:'sync'},()=>{const st=ch.presenceState(),m={};Object.values(st).forEach(a=>a.forEach(p=>{m[p.code]=p.name}));const l=Object.keys(m).filter(c=>c.toLowerCase()!=='damza56').map(c=>m[c]);const o=$('ol');o.classList.remove('hide');o.textContent=l.length?'🟢 ออนไลน์ตอนนี้ ('+l.length+'): '+l.join(', '):'ไม่มีใครออนไลน์ตอนนี้'});ch.subscribe(async s=>{if(s==='SUBSCRIBED')await ch.track({code:me.code,name:me.name})})}catch(e){}}go(1);loadToday();foRender();pushInit()}
 /* ===== v7: ปฏิทิน / คำขอ / วันหยุด / เบิกล่วงหน้า / สลิป / ส่งออก / ยกเลิกจ่าย ===== */
 const VIEW=()=>!!me&&me.role==='viewer',STAFF=()=>!!me&&(me.role==='admin'||me.role==='viewer'),AVN=()=>VIEW()?'attendance_vw':'attendance_v',PRN=()=>VIEW()?'profiles_pub':'profiles';
 let HOLS={},LVS={},REQ=[],ADV=[],PROFS=[],CAL=null,WHO='all',SELD=null,PRE='',NOROWS=false;
 /* ส่งโทเคนผู้ใช้ให้ฟังก์ชันเสมอ (กันกรณีเปิดแอปด้วยเซสชันเดิมแล้วถูกมองว่าไม่ได้ล็อกอิน) */
 const fnCall=async body=>{const{data:{session}}=await sb.auth.getSession();return sb.functions.invoke('manage-employee',{body,headers:session?{Authorization:'Bearer '+session.access_token}:{}})};
-const BUILD='4 พ.ย. 2569 เวลา 10:20 น. (เวอร์ชัน 16)';
+const BUILD='5 พ.ย. 2569 เวลา 09:30 น. (เวอร์ชัน 18)';
 const advOf=id=>ADV.filter(a=>a.user_id===id&&!a.settled_at).reduce((s,a)=>s+ +a.amount,0);
 async function loadMeta(){const[h,r,a]=await Promise.all([sb.from('holidays').select('*').order('day'),sb.from('requests').select('*').order('created_at',{ascending:false}),sb.from('advances').select('*').order('on_date',{ascending:false})]);
   HOLS={};(h.data||[]).forEach(x=>HOLS[x.day]=x.name);REQ=r.data||[];LVS={};REQ.filter(x=>x.kind==='leave'&&x.status==='approved').forEach(x=>(LVS[x.user_id]=LVS[x.user_id]||new Set()).add(x.work_date));ADV=a.data||[]}
@@ -246,7 +246,7 @@ function calBody(){const{rows:R,users,adm,stf,ym}=CAL,by={};R.forEach(r=>by[r.wo
   h+='</div><div class="lg"><span><i style="background:var(--in)"></i>ตรงเวลา</span><span><i style="background:var(--warn)"></i>มาสาย</span><span><i style="background:var(--ot)"></i>มีโอที</span><span><i style="background:var(--mute)"></i>ยังไม่ออก</span></div>';
   if(SELD&&SELD.slice(0,7)===ym){const dt=new Date(SELD+'T00:00:00'),rs=us.map(u=>({u,r:by[SELD+'|'+u.id]})),has=rs.filter(x=>x.r);
     h+='<div style="margin-top:14px;border-top:1px solid var(--line);padding-top:10px"><b>'+dt.toLocaleDateString('th-TH',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+'</b>'+(HOLS[SELD]?' <span class="chip late">'+esc(HOLS[SELD])+'</span>':'')+'<div style="color:var(--mute);font-size:13px">'+has.length+' คนมาทำงาน</div>';
-    rs.forEach(({u,r})=>{if(r){h+=(stf?'<div style="font-weight:600;margin-top:8px"><span class="av" style="background:var(--pri)"></span>'+esc(u.name)+' <small style="color:var(--mute);font-weight:400">'+esc(u.dept||'')+' · เข้างาน '+tm(r.shift_min??u.shift_start)+'</small></div>':'')+rows([r],u,adm)+(!stf&&r.user_id===me.id&&!r.clock_out&&(r.work_date<td||Date.now()-new Date(r.clock_in)>16*36e5)?'<div style="text-align:right;margin-top:6px"><button class="sm" data-fo="'+r.id+'">🕔 แจ้งลืมออกงานวันนี้</button></div>':'')+((adm||VIEW())&&r.approval==='pending'?'<div style="text-align:right;margin-top:6px"><span style="color:var(--mute);font-size:12.5px">เหตุผล: '+esc(r.note||'-')+'</span> <button class="sm" data-ap="'+r.id+'" data-ok="1">อนุมัติ</button><button class="sm" style="background:var(--out)" data-ap="'+r.id+'" data-ok="0">ไม่อนุมัติ</button></div>':'')+(adm&&r.dist_m!=null?'<small style="color:'+(S&&r.dist_m>S.radius_m*.8?'var(--warn)':'var(--mute)')+'">ตำแหน่งตอนเข้างาน ห่างที่ทำงาน '+r.dist_m+' ม.</small>':'')}
+    rs.forEach(({u,r})=>{if(r){h+=(stf?'<div style="font-weight:600;margin-top:8px"><span class="av" style="background:var(--pri)"></span>'+esc(u.name)+' <small style="color:var(--mute);font-weight:400">'+esc(u.dept||'')+' · เข้างาน '+tm(r.shift_min??u.shift_start)+'</small></div>':'')+rows([r],u,adm)+(!stf&&r.user_id===me.id&&!r.clock_out&&Date.now()-new Date(r.clock_in)>16*36e5?'<div style="text-align:right;margin-top:6px"><button class="sm" data-fo="'+r.id+'">🕔 แจ้งลืมออกงานวันนี้</button></div>':'')+((adm||VIEW())&&r.approval==='pending'?'<div style="text-align:right;margin-top:6px"><span style="color:var(--mute);font-size:12.5px">เหตุผล: '+esc(r.note||'-')+'</span> <button class="sm" data-ap="'+r.id+'" data-ok="1">อนุมัติ</button><button class="sm" style="background:var(--out)" data-ap="'+r.id+'" data-ok="0">ไม่อนุมัติ</button></div>':'')+(adm&&r.dist_m!=null?'<small style="color:'+(S&&r.dist_m>S.radius_m*.8?'var(--warn)':'var(--mute)')+'">ตำแหน่งตอนเข้างาน ห่างที่ทำงาน '+r.dist_m+' ม.</small>':'')}
       else if(!stf&&u.id===me.id&&!HOLS[SELD])h+='<div class="it" style="align-items:center;flex-wrap:wrap;gap:6px"><span><small>ไม่มีรายการ</small></span><span>'+(SELD<=td?'<button class="sm" data-rq="in" data-date="'+SELD+'">🕘 ลืมกดเข้างาน</button>':'')+'<button class="sm" data-rq="leave" data-date="'+SELD+'">🏖 ขอลา</button></span></div>';
       else if(adm&&u.role!=='admin'&&SELD<=td&&!HOLS[SELD])h+='<div class="it" style="align-items:center"><span>'+esc(u.name)+' <small>ไม่มีรายการ</small></span><button class="sm" data-ad="'+u.id+'" data-date="'+SELD+'">+ เพิ่ม</button></div>'});
     h+='</div>'}
@@ -284,22 +284,22 @@ function openEd(r,uid,date){const o=modal('<b>'+(r?'แก้ไขเวลา�
   if(r)$('edl').onclick=async()=>{if(!confirm('ลบรายการวันที่ '+r.work_date+' นี้?'))return;const{error}=await sb.rpc('admin_delete_attendance',{p_id:r.id});if(error)return toast('ไม่สำเร็จ: '+error.message);toast('ลบรายการแล้ว');o.close();refresh()}}
 /* ---- คำขอ (พนักงาน) ---- */
 function openReq(mode,rec,date){mode=mode||'leave';
-  if(mode==='out'&&!rec){const op=((CAL&&CAL.rows)||[]).filter(r=>r.user_id===me.id&&!r.clock_out).sort((a,b)=>new Date(b.clock_in)-new Date(a.clock_in));rec=op.find(r=>r.work_date<today())||op[0]||null}
+  if(mode==='out'&&!rec){const op=((CAL&&CAL.rows)||[]).filter(r=>r.user_id===me.id&&!r.clock_out).sort((a,b)=>new Date(b.clock_in)-new Date(a.clock_in));rec=op.find(r=>Date.now()-new Date(r.clock_in)>16*36e5)||op[0]||null}
   const d0=rec?rec.work_date:(date||today()),T={in:'แจ้งลืมกดเข้างาน',out:'แจ้งลืมกดออกงาน',leave:'ขอลา'}[mode],sh=tm(me.shift_start);
   const o=modal('<b>'+T+'</b>'+(mode==='leave'
     ?'<label>ประเภทการลา</label><select id="qt"><option>ลาป่วย</option><option>ลากิจ</option><option>ลาพักร้อน</option><option>ลาอื่น ๆ</option></select><label>ตั้งแต่วันที่</label><input type="date" id="qd" value="'+d0+'"><label>ถึงวันที่ (ลาวันเดียวใช้วันเดียวกัน)</label><input type="date" id="qd2" value="'+d0+'">'
-    :'<label>วันที่เข้างาน</label><input type="date" id="qd" value="'+d0+'"'+(rec?' disabled':'')+'><label>เวลาเข้างานที่ถูกต้อง</label><input type="datetime-local" id="qi" value="'+(rec?toL(rec.clock_in):d0+'T'+sh)+'"><label>เวลาออกงานที่ถูกต้อง'+(mode==='out'?'':' (ถ้ามี)')+'</label><input type="datetime-local" id="qo">')+
+    :'<label>วันที่เข้างาน</label><input type="date" id="qd" value="'+d0+'"'+(rec?' disabled':'')+'>'+(mode==='out'&&rec?'<div style="margin:10px 0">เข้างานเมื่อ <b>'+hm(rec.clock_in)+'</b> <small>(เวลาเข้างานเดิมในระบบ)</small></div>':'<label>เวลาเข้างานที่ถูกต้อง</label><input type="datetime-local" id="qi" value="'+(rec?toL(rec.clock_in):d0+'T'+sh)+'">')+'<label>เวลาออกงานที่ถูกต้อง'+(mode==='out'?'':' (ถ้ามี)')+'</label><input type="datetime-local" id="qo">')+
     '<label>เหตุผล'+(mode==='leave'?' (ถ้ามี)':'')+'</label><input id="qn" maxlength="80"><button class="big pri" id="qs" style="margin-top:12px">ส่งคำขอ</button><button class="big" id="qx" style="'+GHOST+'">ยกเลิก</button>');
   $('qx').onclick=o.close;
-  if(mode!=='leave'&&!rec)$('qd').onchange=()=>{$('qi').value=$('qd').value+'T'+sh};
+  if(mode!=='leave'&&!rec&&$('qi'))$('qd').onchange=()=>{$('qi').value=$('qd').value+'T'+sh};
   if(mode==='leave')$('qd').onchange=()=>{if($('qd2').value<$('qd').value)$('qd2').value=$('qd').value};
   $('qs').onclick=async()=>{const d=$('qd').value,why=$('qn').value.trim();if(!d)return toast('เลือกวันที่');let rows;
     if(mode==='leave'){const d2=$('qd2').value||d;if(d2<d)return toast('วันที่สิ้นสุดต้องไม่ก่อนวันเริ่ม');const a=new Date(d+'T00:00:00Z'),n=Math.round((new Date(d2+'T00:00:00Z')-a)/864e5)+1;if(n>31)return toast('ขอลาได้ครั้งละไม่เกิน 31 วัน');
       rows=[];for(let k=0;k<n;k++){const ds=new Date(a.getTime()+k*864e5).toISOString().slice(0,10);if(HOLS[ds])continue;rows.push({kind:'leave',work_date:ds,note:'['+$('qt').value+']'+(why?' '+why:'')})}
       if(!rows.length)return toast('ช่วงที่เลือกเป็นวันหยุดร้านทั้งหมด')}
-    else{const i=fromL($('qi').value),ou=fromL($('qo').value);if(!i)return toast('ใส่เวลาเข้างานที่ถูกต้อง');if(mode==='out'&&!ou)return toast('ใส่เวลาออกงานที่ถูกต้อง');if(ou&&new Date(ou)<=new Date(i))return toast('เวลาออกต้องหลังเวลาเข้า');
+    else{const i=(mode==='out'&&rec)?rec.clock_in:fromL($('qi').value),ou=fromL($('qo').value);if(!i)return toast('ใส่เวลาเข้างานที่ถูกต้อง');if(mode==='out'&&!ou)return toast('ใส่เวลาออกงานที่ถูกต้อง');if(ou&&new Date(ou)<=new Date(i))return toast('เวลาออกต้องหลังเวลาเข้า');
       rows=[{kind:'forgot',work_date:rec?rec.work_date:d,req_in:i,req_out:ou,note:'['+(mode==='out'?'ลืมออกงาน':'ลืมเข้างาน')+']'+(why?' '+why:'')}]}
-    const{error}=await sb.from('requests').insert(rows);if(error)return toast('ส่งไม่สำเร็จ: '+error.message);toast('ส่งคำขอแล้ว รอส่วนกลางอนุมัติ');o.close();hist()}}
+    const{error}=await sb.from('requests').insert(rows);if(error)return toast('ส่งไม่สำเร็จ: '+error.message);toast('ส่งคำขอแล้ว รอส่วนกลางอนุมัติ');o.close();hist();foRender()}}
 /* ---- ส่วนกลาง: คำขอ/เบิก/วันหยุด/ยกเลิกจ่าย ---- */
 async function renderRq(){const el=$('rq'),P=REQ.filter(x=>x.status==='pending'),nm=id=>(PROFS.find(u=>u.id===id)||{}).name||'-';
   const{data:op}=await sb.from(AVN()).select('*').is('clock_out',null);
@@ -372,6 +372,15 @@ function apShow(){$('pl').disabled=!!rec;if(rec)$('oh').classList.add('hide');co
 $('pl').onchange=btnState;
 async function decAtt(id,ok){if(!confirm(ok?'อนุมัติรายการนี้?':'ไม่อนุมัติรายการนี้? (รายการจะไม่ถูกนำไปคิดค่าแรง)'))return;const{error}=await sb.rpc('decide_attendance',{p_id:+id,p_ok:ok});if(error)return toast('ไม่สำเร็จ: '+error.message+' (ต้องรัน 8-offsite.sql ก่อน)');toast(ok?'อนุมัติแล้ว':'บันทึกแล้ว');refresh()}
 /* ===== จบ v7 ===== */
+
+async function foRender(){const el=$('fo');if(!el||!me)return;try{
+  const[a,b]=await Promise.all([sb.from('attendance').select('*').eq('user_id',me.id).is('clock_out',null),sb.from('requests').select('*').eq('user_id',me.id).eq('kind','forgot').eq('status','pending')]);
+  const L=(a.data||[]).filter(r=>Date.now()-new Date(r.clock_in)>16*36e5);
+  if(!L.length){el.innerHTML='';return}
+  const pend=new Set((b.data||[]).map(x=>x.work_date));
+  el.innerHTML='<div class="warnb" style="margin:10px 0"><b>⚠ ลืมกดออกงาน '+L.length+' รายการ</b>'+L.map(r=>{RECS[r.id]=r;const d=new Date(r.work_date+'T00:00:00').toLocaleDateString('th-TH',{weekday:'short',day:'numeric',month:'short'});
+    return '<div class="it" style="padding:8px 0;border:0;align-items:center"><span>'+d+' <small>เข้างาน '+hm(r.clock_in)+'</small></span>'+(pend.has(r.work_date)?'<span class="chip late">แจ้งแล้ว รออนุมัติ</span>':'<button class="sm" data-fo="'+r.id+'">🕔 แจ้งลืมออกงาน</button>')+'</div>'}).join('')+'</div>'}catch(e){el.innerHTML=''}}
+$('fo').onclick=e=>{const t=e.target;if(t.dataset.fo){openReq('out',RECS[t.dataset.fo])}};
 
 const VAPID='BCzLhWCa4ZjQRjirBsGXvyDxrPBiwuR6bYqcFUITxqjaPbAb0yDzPl6nPoZHUfmJ7gaWoX1fdDQvoSgJ_ib9Gg0';
 const u8=b=>{const r=atob((b+'='.repeat((4-b.length%4)%4)).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from([...r].map(c=>c.charCodeAt(0)))};
