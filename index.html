@@ -227,7 +227,7 @@ const VIEW=()=>!!me&&me.role==='viewer',STAFF=()=>!!me&&(me.role==='admin'||me.r
 let HOLS={},LVS={},REQ=[],ADV=[],PROFS=[],CAL=null,WHO='all',SELD=null,PRE='',NOROWS=false;
 /* ส่งโทเคนผู้ใช้ให้ฟังก์ชันเสมอ (กันกรณีเปิดแอปด้วยเซสชันเดิมแล้วถูกมองว่าไม่ได้ล็อกอิน) */
 const fnCall=async body=>{const{data:{session}}=await sb.auth.getSession();return sb.functions.invoke('manage-employee',{body,headers:session?{Authorization:'Bearer '+session.access_token}:{}})};
-const BUILD='5 พ.ย. 2569 เวลา 12:10 น. (เวอร์ชัน 19)';
+const BUILD='6 พ.ย. 2569 เวลา 08:10 น. (เวอร์ชัน 20)';
 const advOf=id=>ADV.filter(a=>a.user_id===id&&!a.settled_at).reduce((s,a)=>s+ +a.amount,0);
 async function loadMeta(){const[h,r,a]=await Promise.all([sb.from('holidays').select('*').order('day'),sb.from('requests').select('*').order('created_at',{ascending:false}),sb.from('advances').select('*').order('on_date',{ascending:false})]);
   HOLS={};(h.data||[]).forEach(x=>HOLS[x.day]=x.name);REQ=r.data||[];LVS={};REQ.filter(x=>x.kind==='leave'&&x.status==='approved').forEach(x=>(LVS[x.user_id]=LVS[x.user_id]||new Set()).add(x.work_date));ADV=a.data||[]}
@@ -305,13 +305,13 @@ function openReq(mode,rec,date){mode=mode||'leave';
   $('qx').onclick=o.close;
   if(mode!=='leave'&&!rec&&$('qi'))$('qd').onchange=()=>{$('qi').value=$('qd').value+'T'+sh};
   if(mode==='leave')$('qd').onchange=()=>{if($('qd2').value<$('qd').value)$('qd2').value=$('qd').value};
-  $('qs').onclick=async()=>{const d=$('qd').value,why=$('qn').value.trim();if(!d)return toast('เลือกวันที่');let rows;
+  $('qs').onclick=async()=>{if($('qs').disabled)return;const d=$('qd').value,why=$('qn').value.trim();if(!d)return toast('เลือกวันที่');let rows;
     if(mode==='leave'){const d2=$('qd2').value||d;if(d2<d)return toast('วันที่สิ้นสุดต้องไม่ก่อนวันเริ่ม');const a=new Date(d+'T00:00:00Z'),n=Math.round((new Date(d2+'T00:00:00Z')-a)/864e5)+1;if(n>31)return toast('ขอลาได้ครั้งละไม่เกิน 31 วัน');
       rows=[];for(let k=0;k<n;k++){const ds=new Date(a.getTime()+k*864e5).toISOString().slice(0,10);if(HOLS[ds])continue;rows.push({kind:'leave',work_date:ds,note:'['+$('qt').value+']'+(why?' '+why:'')})}
       if(!rows.length)return toast('ช่วงที่เลือกเป็นวันหยุดร้านทั้งหมด')}
     else{const i=(mode==='out'&&rec)?rec.clock_in:fromL($('qi').value),ou=fromL($('qo').value);if(!i)return toast('ใส่เวลาเข้างานที่ถูกต้อง');if(mode==='out'&&!ou)return toast('ใส่เวลาออกงานที่ถูกต้อง');if(ou&&new Date(ou)<=new Date(i))return toast('เวลาออกต้องหลังเวลาเข้า');
       rows=[{kind:'forgot',work_date:rec?rec.work_date:d,req_in:i,req_out:ou,note:'['+(mode==='out'?'ลืมออกงาน':'ลืมเข้างาน')+']'+(why?' '+why:'')}]}
-    const{error}=await sb.from('requests').insert(rows);if(error)return toast('ส่งไม่สำเร็จ: '+error.message);toast('ส่งคำขอแล้ว รอส่วนกลางอนุมัติ');o.close();hist();foRender()}}
+    $('qs').disabled=true;const{error}=await sb.from('requests').insert(rows);if(error){$('qs').disabled=false;return toast(/duplicate|unique/i.test(error.message)?'มีคำขอวันนี้ที่รออนุมัติอยู่แล้ว (ส่งซ้ำไม่ได้)':'ส่งไม่สำเร็จ: '+error.message)}toast('ส่งคำขอแล้ว รอส่วนกลางอนุมัติ');o.close();hist();foRender()}}
 /* ---- ส่วนกลาง: คำขอ/เบิก/วันหยุด/ยกเลิกจ่าย ---- */
 async function renderRq(){const el=$('rq'),P=REQ.filter(x=>x.status==='pending'),nm=id=>(PROFS.find(u=>u.id===id)||{}).name||'-';
   const{data:op}=await sb.from(AVN()).select('*').is('clock_out',null);
