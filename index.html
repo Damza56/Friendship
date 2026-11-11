@@ -227,7 +227,7 @@ const VIEW=()=>!!me&&me.role==='viewer',STAFF=()=>!!me&&(me.role==='admin'||me.r
 let HOLS={},LVS={},REQ=[],ADV=[],PROFS=[],CAL=null,WHO='all',SELD=null,PRE='',NOROWS=false;
 /* ส่งโทเคนผู้ใช้ให้ฟังก์ชันเสมอ (กันกรณีเปิดแอปด้วยเซสชันเดิมแล้วถูกมองว่าไม่ได้ล็อกอิน) */
 const fnCall=async body=>{const{data:{session}}=await sb.auth.getSession();return sb.functions.invoke('manage-employee',{body,headers:session?{Authorization:'Bearer '+session.access_token}:{}})};
-const BUILD='6 พ.ย. 2569 เวลา 08:10 น. (เวอร์ชัน 20)';
+const BUILD='11 พ.ย. 2569 เวลา 22:30 น. (เวอร์ชัน 21)';
 const advOf=id=>ADV.filter(a=>a.user_id===id&&!a.settled_at).reduce((s,a)=>s+ +a.amount,0);
 async function loadMeta(){const[h,r,a]=await Promise.all([sb.from('holidays').select('*').order('day'),sb.from('requests').select('*').order('created_at',{ascending:false}),sb.from('advances').select('*').order('on_date',{ascending:false})]);
   HOLS={};(h.data||[]).forEach(x=>HOLS[x.day]=x.name);REQ=r.data||[];LVS={};REQ.filter(x=>x.kind==='leave'&&x.status==='approved').forEach(x=>(LVS[x.user_id]=LVS[x.user_id]||new Set()).add(x.work_date));ADV=a.data||[]}
@@ -244,8 +244,10 @@ function staleHtml(rs,users,ro){const L=(rs||[]).filter(r=>!r.clock_out&&Date.no
   return '<div class="warnb"><b>⚠ ลืมกดออกงาน '+L.length+' รายการ</b>'+L.map(r=>{RECS[r.id]=r;const u=users.find(x=>x.id===r.user_id);return '<div class="it" style="padding:6px 0;border:0"><span>'+esc(u?u.name:'-')+' <small>เข้า '+new Date(r.work_date+'T00:00:00').toLocaleDateString('th-TH',{day:'numeric',month:'short'})+' '+hm(r.clock_in)+'</small></span>'+(ro?'':'<button class="sm" data-e="'+r.id+'">ใส่เวลาออก</button>')+'</div>'}).join('')+'</div>'}
 /* ---- ปฏิทิน ---- */
 const MD=['อา','จ','อ','พ','พฤ','ศ','ส'];
+function absTot(users,rows,ym){let n=0;users.filter(u=>u.role==='employee').forEach(u=>{n+=mAbs(u,ym,new Set(rows.filter(r=>r.user_id===u.id&&okA(r)).map(r=>r.work_date))).abs.length});return n}
 function calBody(){const{rows:R,users,adm,stf,ym}=CAL,by={};R.forEach(r=>by[r.work_date+'|'+r.user_id]=r);(CAL.rows||[]).forEach(r=>RECS[r.id]=r);
   const[y,m]=ym.split('-').map(Number),n=new Date(y,m,0).getDate(),f=new Date(y,m-1,1).getDay(),td=today(),us=stf&&WHO!=='all'?users.filter(u=>u.id===WHO):users,single=us.length===1;
+  const ABM={};us.filter(u=>u.role==='employee').forEach(u=>mAbs(u,ym,new Set(R.filter(r=>r.user_id===u.id&&okA(r)).map(r=>r.work_date))).abs.forEach(ds=>(ABM[ds]=ABM[ds]||[]).push(u.name)));
   let h='';if(stf)h+='<div class="pf"><button data-wf="all" class="'+(WHO==='all'?'on':'')+'">ทุกคน</button>'+users.map(u=>'<button data-wf="'+u.id+'" class="'+(WHO===u.id?'on':'')+'">'+esc(u.name)+'</button>').join('')+'</div>';
   h+='<div class="g7" style="margin-top:6px">'+MD.map(x=>'<div class="dh">'+x+'</div>').join('')+'</div><div class="g7">';
   for(let k=0;k<f;k++)h+='<div class="c e"></div>';
@@ -253,9 +255,10 @@ function calBody(){const{rows:R,users,adm,stf,ym}=CAL,by={};R.forEach(r=>by[r.wo
       off=u0&&u0.pay_type==='monthly'&&new Date(y,m-1,d).getDay()===+u0.day_off,lv=u0&&LVS[u0.id]&&LVS[u0.id].has(ds);let b='';
     if(rs.length){b='<div class="dots">'+rs.map(r=>'<i style="background:'+dotc(r,users)+'"></i>').join('')+'</div>';
       b+=single?'<small>'+hm(rs[0].clock_in)+'</small>'+(rs[0].ot_min>0&&u0.pay_type!=='monthly'?'<small class="ot">OT '+Math.floor(rs[0].ot_min/60)+'.'+pad(rs[0].ot_min%60)+'</small>':'')+(rs[0].ot_paid_at?'<small class="ok">✓จ่าย</small>':''):'<small>'+rs.length+' คน</small>'}
+    if(!hol&&ABM[ds]&&!rs.length)b+='<small style="color:var(--out);font-weight:700">ขาด'+(single?'':' '+ABM[ds].length)+'</small>';
     if(hol)b+='<small style="color:var(--out)">หยุด</small>';else if(lv)b+='<small>ลา</small>';else if(off&&!rs.length)b+='<small>หยุด</small>';
     h+='<button class="c'+(ds===SELD?' sel':'')+(ds===td?' td':'')+(fut?' fut':'')+(hol?' hol':'')+'" data-k="'+ds+'"><b>'+d+'</b>'+b+'</button>'}
-  h+='</div><div class="lg"><span><i style="background:var(--in)"></i>ตรงเวลา</span><span><i style="background:var(--warn)"></i>มาสาย</span><span><i style="background:var(--ot)"></i>มีโอที</span><span><i style="background:var(--mute)"></i>ยังไม่ออก</span></div>';
+  h+='</div><div class="lg"><span><i style="background:var(--in)"></i>ตรงเวลา</span><span><i style="background:var(--warn)"></i>มาสาย</span><span><i style="background:var(--ot)"></i>มีโอที</span><span><i style="background:var(--mute)"></i>ยังไม่ออก</span><span style="color:var(--out)">ขาด = ไม่มีรายการ/ไม่ลา</span></div>';
   if(SELD&&SELD.slice(0,7)===ym){const dt=new Date(SELD+'T00:00:00'),rs=us.map(u=>({u,r:by[SELD+'|'+u.id]})),has=rs.filter(x=>x.r);
     h+='<div style="margin-top:14px;border-top:1px solid var(--line);padding-top:10px"><b>'+dt.toLocaleDateString('th-TH',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+'</b>'+(HOLS[SELD]?' <span class="chip late">'+esc(HOLS[SELD])+'</span>':'')+'<div style="color:var(--mute);font-size:13px">'+has.length+' คนมาทำงาน</div>';
     rs.forEach(({u,r})=>{if(r){h+=(stf?'<div style="font-weight:600;margin-top:8px"><span class="av" style="background:var(--pri)"></span>'+esc(u.name)+' <small style="color:var(--mute);font-weight:400">'+esc(u.dept||'')+' · เข้างาน '+tm(r.shift_min??u.shift_start)+'</small></div>':'')+rows([r],u,adm)+(!stf&&r.user_id===me.id&&!r.clock_out&&Date.now()-new Date(r.clock_in)>16*36e5?'<div style="text-align:right;margin-top:6px"><button class="sm" data-fo="'+r.id+'">🕔 แจ้งลืมออกงานวันนี้</button></div>':'')+((adm||VIEW())&&r.approval==='pending'?'<div style="text-align:right;margin-top:6px"><span style="color:var(--mute);font-size:12.5px">เหตุผล: '+esc(r.note||'-')+'</span> <button class="sm" data-ap="'+r.id+'" data-ok="1">อนุมัติ</button><button class="sm" style="background:var(--out)" data-ap="'+r.id+'" data-ok="0">ไม่อนุมัติ</button></div>':'')+(adm&&r.dist_m!=null?'<small style="color:'+(S&&r.dist_m>S.radius_m*.8?'var(--warn)':'var(--mute)')+'">ตำแหน่งตอนเข้างาน ห่างที่ทำงาน '+r.dist_m+' ม.</small>':'')}
@@ -270,7 +273,7 @@ async function hist(){$('hl').textContent=lab(hy);$('hn').disabled=hy>=ymNow();c
   if(stf){users=(await sb.from(PRN()).select('*').eq('active',true).order('name')).data||[];if(!users.find(u=>u.id===WHO))WHO='all';
     const{data:op}=await sb.from(AVN()).select('*').is('clock_out',null);
     const tot=(data||[]).filter(r=>r.clock_out&&(users.find(u=>u.id===r.user_id)||{}).pay_type!=='monthly').reduce((s,r)=>s+r.ot_min,0);
-    PRE=staleHtml(op,users,!adm)+'<div class="g" style="margin-bottom:10px;grid-template-columns:1fr 1fr 1fr"><div><small>รายการเดือนนี้</small><b>'+(data||[]).length+'</b></div><div><small>มาสาย</small><b class="late">'+(data||[]).filter(r=>r.late).length+'</b></div><div><small>โอทีรวม</small><b class="ot">'+(tot/60).toFixed(1)+' ชม.</b></div></div>'+
+    PRE=staleHtml(op,users,!adm)+'<div class="g" style="margin-bottom:10px;grid-template-columns:1fr 1fr 1fr 1fr"><div><small>รายการเดือนนี้</small><b>'+(data||[]).length+'</b></div><div><small>มาสาย</small><b class="late">'+(data||[]).filter(r=>r.late).length+'</b></div><div><small>ขาดงาน</small><b style="color:var(--out)">'+absTot(users,data||[],hy)+' วัน</b></div><div><small>โอทีรวม</small><b class="ot">'+(tot/60).toFixed(1)+' ชม.</b></div></div>'+
       (adm?'<button class="sm" data-exp="1" style="margin:0 0 10px">⬇ ส่งออกไฟล์ Excel (CSV) เดือนนี้</button>':'')}
   else{NOROWS=true;try{await histOld()}finally{NOROWS=false}
     PRE=$('hs').innerHTML+'<div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 10px"><button class="sm" data-rq="in" style="margin:0">🕘 ลืมกดเข้างาน</button><button class="sm" data-rq="out" style="margin:0">🕔 ลืมกดออกงาน</button><button class="sm" data-rq="leave" style="margin:0">🏖 ขอลา</button><button class="sm" data-slip="'+me.id+'" style="margin:0">สลิปเดือนนี้</button></div>';
