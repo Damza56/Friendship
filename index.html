@@ -54,7 +54,7 @@ nav button{flex:1;border:0;background:none;padding:14px 0;color:var(--mute);font
 <details class="card" style="padding:14px 16px"><summary style="cursor:pointer;font-weight:700">วันหยุดร้าน และเกณฑ์มาสาย <span style="color:var(--mute);font-weight:400;font-size:12px">(แตะเพื่อเปิด)</span></summary><label>มาสายเมื่อเข้างานช้ากว่าเวลาที่กำหนดเกิน (นาที)</label><input id="lgv" type="number" min="0" max="240" value="10"><button class="big pri" id="lgs" style="padding:12px;font-size:15px">บันทึกเกณฑ์สาย</button>
 <label>เพิ่มวันหยุดร้าน / วันนักขัตฤกษ์</label><input id="hdt" type="date"><input id="hnm" placeholder="ชื่อวันหยุด เช่น วันปีใหม่" maxlength="40"><button class="big pri" id="hadd" style="padding:12px;font-size:15px">เพิ่มวันหยุด</button><div id="hlist" style="margin-top:8px"></div><div style="color:var(--mute);font-size:12px;margin-top:4px">วันหยุดไม่ถูกนับเป็นวันขาดของพนักงานรายเดือน</div></details>
 <div id="rq"></div>
-<div class="card"><b>คำนวณเงินเดือน / ค่าแรง / ค่าโอที</b><div style="color:var(--mute);font-size:13px;margin:6px 0">รายวัน: ค่าแรงรายวัน × วันที่ทำงาน + โอที (เกิน 12 ชม. × อัตรา) นับเฉพาะวันที่ออกงานแล้วและยังไม่เคยจ่าย · รายเดือน: เงินเดือนของเดือนที่เลือกด้านบน หักวันขาด (ไม่มีโอที) ตั้งอัตราของแต่ละคนในรายชื่อด้านล่าง</div><button class="big pri" id="ob" style="margin-top:6px">คำนวณเงินเดือนและโอที</button><div id="ov"></div></div>
+<div class="card"><b>คำนวณเงินเดือน / ค่าแรง / ค่าโอที</b><div style="color:var(--mute);font-size:13px;margin:6px 0">รายวัน: ค่าแรงรายวัน × วันที่ทำงาน + โอที (เกิน 12 ชม. × อัตรา) นับเฉพาะวันที่ออกงานแล้วและยังไม่เคยจ่าย · รายเดือน: เงินเดือนของเดือนที่เลือกด้านบน หักวันขาด (ไม่มีโอที) ตั้งอัตราของแต่ละคนในรายชื่อด้านล่าง</div><div style="display:flex;gap:8px;align-items:flex-end;margin-top:6px"><div style="flex:1"><label style="margin:0">รายวัน: ตั้งแต่วันที่</label><input type="date" id="of"></div><div style="flex:1"><label style="margin:0">ถึงวันที่</label><input type="date" id="ot2"></div></div><div style="color:var(--mute);font-size:12px;margin:4px 0">เว้นว่าง = คำนวณทุกวันที่ยังไม่เคยจ่าย (ใช้กับพนักงานรายวัน · รายเดือนใช้เดือนที่เลือกด้านบน)</div><button class="big pri" id="ob" style="margin-top:6px">คำนวณเงินเดือนและโอที</button><div id="ov"></div></div>
 <div class="card" id="gs"></div></section></div></div>
 <nav id="nv" class="hide"><button id="n1" class="on">ลงเวลา</button><button id="n2">ของฉัน</button><button id="n3" class="hide">ส่วนกลาง</button></nav>
 <div class="t" id="t"></div>
@@ -170,9 +170,9 @@ const det=x=>{const wg=+x.u.daily_wage||0,rt=+x.u.ot_rate||0,ot=x.rows.filter(r=
    ot.map(r=>R('<b>'+new Date(r.work_date+'T00:00:00').toLocaleDateString('th-TH',{weekday:'short',day:'numeric',month:'short'})+'</b><small>'+hm(r.clock_in)+'–'+hm(r.clock_out)+' ('+fmt(r.worked_min)+')</small>','ค่าแรง '+mm(wg)+'<small style="color:var(--ot)">โอที '+fmt(r.ot_min)+' = '+mm(Math.round(r.ot_min/60*rt*100)/100)+'</small>')).join('')+
    (oth?R('<b>วันอื่น ๆ อีก '+oth+' วัน</b><small>ไม่มีโอที</small>','ค่าแรง '+mm(oth*wg)):'')+
    '<div class="it" style="padding:7px 0;font-size:13px"><span>รวมค่าแรง ('+x.d+' วัน)</span><b>'+mm(x.w)+'</b></div><div class="it" style="padding:7px 0;font-size:13px"><span>รวมค่าโอที ('+fmt(x.m)+')</span><b style="color:var(--ot)">'+mm(x.o)+'</b></div><div class="it" style="padding:7px 0"><b>ยอดจ่ายทั้งสิ้น</b><b>'+mm(x.a)+'</b></div></details>'};
-$('ob').onclick=async()=>{const el=$('ov');el.innerHTML='กำลังคำนวณ…';const[ma,mb]=range(gy);
+$('ob').onclick=async()=>{const el=$('ov');const OF=$('of').value,OT2=$('ot2').value;if(OF&&OT2&&OF>OT2)return toast('วันที่เริ่มต้องไม่เกินวันที่สิ้นสุด');el.innerHTML='กำลังคำนวณ…';const[ma,mb]=range(gy);
   const[p,r,ra,sp]=await Promise.all([sb.from('profiles').select('id,name,code,ot_rate,daily_wage,pay_type,monthly_salary,day_off,deduct_absent,hired_on').eq('active',true).order('name'),
-    sb.from(AVN()).select('user_id,work_date,clock_in,clock_out,worked_min,ot_min').is('ot_paid_at',null).or('approval.is.null,approval.eq.approved').not('clock_out','is',null).order('work_date',{ascending:false}),
+    sb.from(AVN()).select('user_id,work_date,clock_in,clock_out,worked_min,ot_min').is('ot_paid_at',null).or('approval.is.null,approval.eq.approved').not('clock_out','is',null).gte('work_date',OF||'0000-01-01').lte('work_date',OT2||'9999-12-31').order('work_date',{ascending:false}),
     sb.from('attendance').select('user_id,work_date').or('approval.is.null,approval.eq.approved').gte('work_date',ma).lt('work_date',mb),sb.from('salary_payments').select('user_id').eq('ym',gy)]);
   const m={},dy={},rw={};(r.data||[]).forEach(x=>{m[x.user_id]=(m[x.user_id]||0)+x.ot_min;dy[x.user_id]=(dy[x.user_id]||0)+1;(rw[x.user_id]=rw[x.user_id]||[]).push(x)});
   const att={};(ra.data||[]).forEach(x=>(att[x.user_id]=att[x.user_id]||new Set()).add(x.work_date));const paidM=new Set((sp.data||[]).map(x=>x.user_id));
@@ -185,7 +185,7 @@ $('ob').onclick=async()=>{const el=$('ov');el.innerHTML='กำลังคำ�
   const chk2=(k,x,a,w,o)=>'<input type="checkbox" class="oc" data-k="'+k+'" value="'+x.u.id+'" data-a="'+a+'" data-w="'+w+'" data-o="'+o+'"'+(a>0?' checked':'')+' style="width:auto;margin:0 8px 0 0">';
   const avl=x=>x.av?'<div style="display:flex;justify-content:space-between;margin:6px 0 0;padding:0 10px;font-size:13px;color:var(--out)"><span>หักเบิกล่วงหน้า</span><b>−'+money(x.av)+'</b></div>':'';
   const hd=(x,tot)=>'<div style="display:flex;justify-content:space-between;align-items:center"><span>'+'@@'+'<b style="font-size:16px">'+esc(x.u.name)+'</b></span><span style="text-align:right"><small style="display:block;color:var(--mute);font-size:11px">ยอดจ่ายสุทธิ</small><b style="font-size:17px">'+money(tot)+'</b></span></div>';
-  el.innerHTML=(L.length?'<div style="margin-top:12px;font-size:14px;font-weight:700;color:var(--ink)">① พนักงานรายวัน <span style="font-weight:400;color:var(--mute);font-size:12px">(แยก ค่าแรง / โอที ที่ยังไม่เคยจ่าย)</span></div>':'')+L.map(x=>'<label style="display:block;margin:8px 0 0;padding:10px;border:1px solid var(--line);border-radius:12px;color:var(--ink)">'+
+  el.innerHTML=(L.length?'<div style="margin-top:12px;font-size:14px;font-weight:700;color:var(--ink)">① พนักงานรายวัน <span style="font-weight:400;color:var(--mute);font-size:12px">(แยก ค่าแรง / โอที ที่ยังไม่เคยจ่าย'+(OF||OT2?' · ช่วง '+(OF?dfmt(OF):'เริ่มต้น')+' – '+(OT2?dfmt(OT2):'ปัจจุบัน'):'')+')</span></div>':'')+L.map(x=>'<label style="display:block;margin:8px 0 0;padding:10px;border:1px solid var(--line);border-radius:12px;color:var(--ink)">'+
     hd(x,x.a).replace('@@',chk2('d',x,x.a,x.w,x.o))+
     blk('var(--pri)','ค่าแรง',x.d+' วัน × '+money(+x.u.daily_wage||0),money(x.w))+
     blk('var(--ot)','ค่าโอที',fmt(x.m)+' × '+money(+x.u.ot_rate||0)+'/ชม.',money(x.o))+avl(x)+((+x.u.daily_wage||+x.u.ot_rate)?'':'<div style="color:var(--warn);font-size:12px;margin-top:6px">ยังไม่ตั้งอัตรา</div>')+'</label>'+det(x)).join('')+
@@ -202,7 +202,7 @@ $('ob').onclick=async()=>{const el=$('ov');el.innerHTML='กำลังคำ�
   $('oc').onclick=()=>{el.innerHTML='';toast('ย้อนกลับแล้ว ยังไม่มีการจ่ายเงิน')};
   $('oy').onclick=async()=>{const cs=[...el.querySelectorAll('.oc:checked')],di=cs.filter(c=>c.dataset.k==='d').map(c=>c.value),mi=cs.filter(c=>c.dataset.k==='m').map(c=>c.value);if(!cs.length)return toast('ยังไม่ได้เลือกพนักงาน');
     if(!confirm('ยืนยันจ่าย '+cs.length+' คน รวม '+$('ot').textContent+' ?'))return;let n=0;
-    if(di.length){const{data,error}=await sb.rpc('pay_ot',{p_users:di});if(error)return toast('ไม่สำเร็จ: '+error.message);n+=(data||[]).length}
+    if(di.length){const{data,error}=await sb.rpc('pay_ot',{p_users:di,p_from:OF||null,p_to:OT2||null});if(error)return toast('ไม่สำเร็จ: '+error.message);n+=(data||[]).length}
     if(mi.length){const{data,error}=await sb.rpc('pay_monthly',{p_users:mi,p_ym:gy});if(error)return toast('ไม่สำเร็จ: '+error.message);n+=(data||[]).length}
     {const sv=cs.map(c=>c.value).filter(id=>advOf(id)>0);if(sv.length)await sb.rpc('settle_advances',{p_users:sv})}toast('บันทึกการจ่ายแล้ว '+n+' คน');el.innerHTML='';admin()}};
 $('ab').onclick=async()=>{const v=$('as').value,body={action:'create',code:$('ac').value,name:$('an').value.trim(),dept:$('ad').value.trim(),password:$('ap').value,shift_start:+v.slice(0,2)*60+ +v.slice(3)};
@@ -227,7 +227,7 @@ const VIEW=()=>!!me&&me.role==='viewer',STAFF=()=>!!me&&(me.role==='admin'||me.r
 let HOLS={},LVS={},REQ=[],ADV=[],PROFS=[],CAL=null,WHO='all',SELD=null,PRE='',NOROWS=false;
 /* ส่งโทเคนผู้ใช้ให้ฟังก์ชันเสมอ (กันกรณีเปิดแอปด้วยเซสชันเดิมแล้วถูกมองว่าไม่ได้ล็อกอิน) */
 const fnCall=async body=>{const{data:{session}}=await sb.auth.getSession();return sb.functions.invoke('manage-employee',{body,headers:session?{Authorization:'Bearer '+session.access_token}:{}})};
-const BUILD='11 พ.ย. 2569 เวลา 23:30 น. (เวอร์ชัน 23)';
+const BUILD='17 พ.ย. 2569 เวลา 08:50 น. (เวอร์ชัน 24)';
 const advOf=id=>ADV.filter(a=>a.user_id===id&&!a.settled_at).reduce((s,a)=>s+ +a.amount,0);
 let SW={};const isOff=(u,ds)=>{const w=SW[u.id]&&SW[u.id][ds];return w?w.kind==='off':new Date(ds+'T00:00:00Z').getUTCDay()===+u.day_off};
 async function loadMeta(){const[h,r,a,sw]=await Promise.all([sb.from('holidays').select('*').order('day'),sb.from('requests').select('*').order('created_at',{ascending:false}),sb.from('advances').select('*').order('on_date',{ascending:false}),sb.from('day_swaps').select('*')]);SW={};(sw.data||[]).forEach(x=>(SW[x.user_id]=SW[x.user_id]||{})[x.day]=x);
